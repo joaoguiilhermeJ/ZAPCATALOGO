@@ -207,37 +207,76 @@ body {
 }
 
 /* ─── Phone Mockup (Modelos) ─── */
+/*
+   Responsividade inteligente da moldura:
+   - LG+ (≥1024px): moldura preta elegante com notch, status, footer
+   - <1024px: moldura desaparece, conteúdo ocupa 100% da largura sem bordas
+*/
 .mockup-phone {
-  width: 270px;
-  min-height: 520px;
-  border-radius: 36px;
-  border: 3px solid #1a1a2e;
-  background: #fff;
-  overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  width: 100%;
+  max-width: 360px;
+  min-height: 380px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+  box-shadow: none;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   transition: box-shadow 0.4s ease;
   position: relative;
 }
-.mockup-phone .phone-notch {
-  width: 110px;
-  height: 18px;
-  background: #1a1a2e;
-  border-radius: 0 0 14px 14px;
-  margin: 0 auto;
-  flex-shrink: 0;
+
+/* ─── Aparência desktop (LG+) ─── */
+@media (min-width: 1024px) {
+  .mockup-phone {
+    width: 270px;
+    min-height: 520px;
+    border-radius: 36px;
+    border: 3px solid #1a1a2e;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  }
+  .mockup-phone .phone-notch {
+    width: 110px;
+    height: 18px;
+    background: #1a1a2e;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+  .mockup-phone .phone-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #555;
+    flex-shrink: 0;
+  }
 }
-.mockup-phone .phone-status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px 4px;
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: #555;
-  flex-shrink: 0;
+
+/* ─── Mobile (<LG): carcaça invisível, conteúdo em tela cheia ─── */
+@media (max-width: 1023px) {
+  .mockup-phone {
+    max-width: 100%;
+    min-height: auto;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .mockup-phone .phone-notch { display: none; }
+  .mockup-phone .phone-status { display: none; }
+  .mockup-phone .mockup-phone-footer { display: none; }
+  .mockup-content-wrap {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
 }
 
 /* ─── Phone Header (logo + nome loja) ─── */
@@ -269,6 +308,64 @@ body {
   font-size: 0.6rem;
   opacity: 0.6;
   transition: color 0.4s ease;
+}
+
+/* ─── Shopping Cart Bar ─── */
+.mockup-cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #555;
+  background: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: border-color 0.4s ease;
+}
+.mockup-cart i {
+  font-size: 0.85rem;
+  color: #128c7e;
+}
+#cartSummary {
+  transition: color 0.3s ease, font-weight 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Product Row + "Adicionar" Button ─── */
+.mockup-product-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.mockup-btn-add {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: #fff;
+  font-size: 0.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(37,211,102,0.3);
+  padding: 0;
+  line-height: 1;
+}
+.mockup-btn-add:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 10px rgba(37,211,102,0.5);
+}
+.mockup-btn-add:active {
+  transform: scale(0.9);
 }
 
 /* ─── Phone Products ─── */
