@@ -161,6 +161,260 @@ body {
   transform: scale(1.01);
 }
 
+/* ═══════════════════════════════════════════════
+   Demonstração de Modelos — Seção Interativa
+   ═══════════════════════════════════════════════ */
+
+/* ─── Section wrapper ─── */
+.modelos-section {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  scroll-margin-top: 80px;
+}
+
+/* ─── Tabs ─── */
+.modelos-tab {
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.modelos-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.modelos-tab:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+.modelos-tab.active {
+  border-color: #25d366;
+  box-shadow: 0 8px 28px rgba(37,211,102,0.18);
+  transform: translateY(-3px);
+}
+.modelos-tab .tab-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background 0.4s ease;
+}
+
+/* ─── Phone Mockup (Modelos) ─── */
+.mockup-phone {
+  width: 270px;
+  min-height: 520px;
+  border-radius: 36px;
+  border: 3px solid #1a1a2e;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.4s ease;
+  position: relative;
+}
+.mockup-phone .phone-notch {
+  width: 110px;
+  height: 18px;
+  background: #1a1a2e;
+  border-radius: 0 0 14px 14px;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+.mockup-phone .phone-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px 4px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #555;
+  flex-shrink: 0;
+}
+
+/* ─── Phone Header (logo + nome loja) ─── */
+.mockup-store-header {
+  padding: 10px 14px 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.4s ease;
+  flex-shrink: 0;
+}
+.mockup-store-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.mockup-store-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: color 0.4s ease;
+}
+.mockup-store-sub {
+  font-size: 0.6rem;
+  opacity: 0.6;
+  transition: color 0.4s ease;
+}
+
+/* ─── Phone Products ─── */
+.mockup-products {
+  padding: 8px 14px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.mockup-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.75);
+  transition: all 0.4s ease;
+  animation: productFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.mockup-product:nth-child(1) { animation-delay: 0.05s; }
+.mockup-product:nth-child(2) { animation-delay: 0.12s; }
+.mockup-product:nth-child(3) { animation-delay: 0.19s; }
+.mockup-product-emoji {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  transition: background 0.4s ease;
+}
+.mockup-product-info {
+  flex: 1;
+  min-width: 0;
+}
+.mockup-product-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: color 0.4s ease;
+}
+.mockup-product-price {
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-top: 1px;
+  transition: color 0.4s ease;
+}
+.mockup-product-desc {
+  font-size: 0.58rem;
+  opacity: 0.55;
+  margin-top: 1px;
+  transition: color 0.4s ease;
+}
+.mockup-product-tag {
+  font-size: 0.5rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  transition: background 0.4s ease, color 0.4s ease;
+  flex-shrink: 0;
+}
+@keyframes productFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Phone Footer ─── */
+.mockup-phone-footer {
+  padding: 8px 14px 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: border-color 0.4s ease;
+}
+.mockup-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: background 0.4s ease;
+}
+
+/* ─── Transition wrapper — fade + scale ─── */
+.mockup-content-wrap {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: opacity, transform;
+}
+.mockup-content-wrap.switching {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* ─── Download button per tab ─── */
+.btn-tab-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 12px;
+  color: #fff;
+}
+.btn-tab-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ─── Mobile tabs pills ─── */
+.modelos-mobile-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.modelos-mobile-tabs::-webkit-scrollbar { display: none; }
+.modelos-mobile-tab {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.modelos-mobile-tab:active { transform: scale(0.96); }
+.modelos-mobile-tab.active {
+  border-color: #25d366;
+  background: rgba(37,211,102,0.08);
+  color: #128c7e;
+}
+
 /* ─── Responsivo ─── */
 @media (max-width: 1023px) {
   .phone-mockup { display: none; }
