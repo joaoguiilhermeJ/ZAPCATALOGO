@@ -40,14 +40,21 @@ app.get(/^(?!\/api).*/, (_req, res) => {
 // ── Tratamento global de erros ──
 app.use(errorHandler);
 
-// ── Inicialização ──
-app.listen(config.port, () => {
-  console.log(`
+// ── Export para Vercel (serverless) ──
+export default app;
+
+// ── Inicialização standalone ──
+// Só escuta se NÃO estiver rodando como serverless function na Vercel
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+if (!isVercel) {
+  app.listen(config.port, () => {
+    console.log(`
   ╔═══════════════════════════════════════════╗
   ║           ZapCatálogo  API                ║
   ╠═══════════════════════════════════════════╣
   ║  🚀  http://localhost:${String(config.port).padEnd(30)}║
   ║  📁  Modo: ${config.env.padEnd(35)}║
   ╚═══════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+}

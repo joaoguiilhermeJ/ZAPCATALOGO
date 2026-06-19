@@ -117,6 +117,25 @@ export class SpreadsheetService {
   }
 
   /**
+   * Lê uma planilha Excel a partir de um Buffer (memoryStorage)
+   * Necessário para compatibilidade com Vercel (serverless)
+   */
+  readSpreadsheetFromBuffer(buffer) {
+    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    return {
+      sheets: workbook.SheetNames,
+      activeSheet: sheetName,
+      rowCount: data.length,
+      columns: this.getColumns(worksheet),
+      data,
+    };
+  }
+
+  /**
    * Remove arquivo temporário
    */
   cleanup(filePath) {

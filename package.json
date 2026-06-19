@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "ZapCatálogo - Catálogo de produtos com integração WhatsApp",
   "type": "module",
-  "main": "src/index.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"
