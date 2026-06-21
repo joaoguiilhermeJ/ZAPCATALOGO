@@ -519,3 +519,446 @@ body {
 @media (min-width: 640px) {
   .header-logo { max-height: 48px; }
 }
+
+/* ═══════════════════════════════════════════════
+   Página de Cadastro / Onboarding
+   ═══════════════════════════════════════════════ */
+
+/* ─── Glassmorphism Card ─── */
+.cadastro-glass {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* ─── Input Fields ─── */
+.cadastro-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0f172a;
+  transition: all 0.25s ease;
+  outline: none;
+  font-family: inherit;
+}
+.cadastro-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+.cadastro-input:focus {
+  border-color: #25d366;
+  box-shadow: 0 0 0 3px rgba(37,211,102,0.12);
+}
+.cadastro-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.10);
+}
+
+.cadastro-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Logo Upload Dropzone ─── */
+.cadastro-logo-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+  position: relative;
+  overflow: hidden;
+}
+.cadastro-logo-zone:hover {
+  border-color: #25d366;
+  background: rgba(37,211,102,0.04);
+}
+.cadastro-logo-zone.dragover {
+  border-color: #25d366;
+  background: rgba(37,211,102,0.08);
+  transform: scale(1.01);
+}
+.cadastro-logo-zone.has-logo {
+  border-color: #25d366;
+  background: rgba(37,211,102,0.04);
+  padding: 12px;
+}
+.cadastro-logo-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  display: none;
+}
+.cadastro-logo-preview.visible {
+  display: block;
+}
+.cadastro-logo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: background 0.2s ease;
+  line-height: 1;
+}
+.cadastro-logo-remove:hover {
+  background: rgba(239,68,68,0.8);
+}
+.cadastro-logo-remove.visible {
+  display: flex;
+}
+
+/* ─── Color Swatches ─── */
+.color-swatch-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+.color-swatch:hover {
+  transform: scale(1.15);
+}
+.color-swatch.active {
+  border-color: #1e293b;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1e293b;
+  transform: scale(1.12);
+}
+.color-swatch-picker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px dashed #cbd5e1;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  background: #f8fafc;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.color-swatch-picker:hover {
+  border-color: #25d366;
+  color: #25d366;
+}
+.color-swatch-picker input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Mockup Phone (Cadastro live preview) ─── */
+.cadastro-preview-shell {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.cadastro-phone-mockup {
+  width: 100%;
+  background: #fff;
+  border-radius: 0;
+  border: none;
+  overflow: hidden;
+  box-shadow: none;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.4s ease;
+}
+
+@media (min-width: 1024px) {
+  .cadastro-phone-mockup {
+    width: 280px;
+    min-height: 520px;
+    border-radius: 36px;
+    border: 3px solid #1a1a2e;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+  }
+  .cadastro-phone-notch {
+    width: 110px;
+    height: 18px;
+    background: #1a1a2e;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+  .cadastro-phone-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #555;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .cadastro-phone-notch { display: none; }
+  .cadastro-phone-status { display: none; }
+  .cadastro-phone-footer { display: none; }
+  .cadastro-phone-mockup {
+    max-width: 100%;
+    min-height: auto;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: #fff;
+  }
+}
+
+.cadastro-preview-header {
+  padding: 12px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+.cadastro-preview-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  background: #8e7cc3;
+  color: #fff;
+  overflow: hidden;
+}
+.cadastro-preview-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.cadastro-preview-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: color 0.3s ease;
+  color: #1e293b;
+}
+.cadastro-preview-sub {
+  font-size: 0.6rem;
+  opacity: 0.5;
+  transition: color 0.3s ease;
+  color: inherit;
+}
+
+.cadastro-preview-cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #555;
+  background: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.cadastro-preview-cart i {
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.cadastro-preview-products {
+  padding: 10px 14px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cadastro-preview-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.75);
+}
+.cadastro-preview-product-emoji {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+.cadastro-preview-product-info {
+  flex: 1;
+  min-width: 0;
+}
+.cadastro-preview-product-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+.cadastro-preview-product-price {
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-top: 1px;
+  transition: color 0.3s ease;
+}
+
+.cadastro-preview-footer {
+  padding: 8px 14px 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.cadastro-preview-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+/* ─── Submit Button ─── */
+.btn-cadastro {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 16px;
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  background: linear-gradient(135deg,#25d366,#128c7e);
+  box-shadow: 0 4px 20px rgba(37,211,102,0.35);
+  font-family: inherit;
+}
+.btn-cadastro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(37,211,102,0.5);
+}
+.btn-cadastro:active {
+  transform: scale(0.97);
+}
+.btn-cadastro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.btn-cadastro.loading {
+  pointer-events: none;
+}
+
+/* ─── Success State ─── */
+.cadastro-success {
+  animation: cadastroFadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes cadastroFadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── Steps indicator ─── */
+.cadastro-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+.cadastro-step-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.cadastro-step-item.active {
+  color: #128c7e;
+}
+.cadastro-step-item.completed {
+  color: #25d366;
+}
+.cadastro-step-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+}
+.cadastro-step-item.active .cadastro-step-number {
+  background: #128c7e;
+  color: #fff;
+}
+.cadastro-step-item.completed .cadastro-step-number {
+  background: #25d366;
+  color: #fff;
+}
+.cadastro-step-line {
+  width: 24px;
+  height: 2px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+.cadastro-step-line.completed {
+  background: #25d366;
+}
