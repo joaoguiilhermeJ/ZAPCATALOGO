@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <title>ZapCatálogo — Meu Catálogo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            whatsapp: { light: '#25D366', DEFAULT: '#128C7E', dark: '#075E54', bg: '#f0fdf4' },
+            slatecustom: { dark: '#0f172a', text: '#334155', light: '#f8fafc' }
+          },
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Poppins', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <script>window.API_URL = window.API_URL || 'http://localhost:3001';</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .product-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      padding: 1.25rem;
+      transition: all 0.3s ease;
+      border: 1px solid #f1f5f9;
+    }
+    .product-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="bg-slatecustom-light text-slatecustom-text font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="site-header px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 no-underline">
+        <img src="image/logo.png" alt="ZapCatálogo" class="header-logo" width="1408" height="768"
+             loading="lazy" onerror="this.onerror=null; this.src='image/ZAPCATALOGO.png'">
+      </a>
+      <div class="flex items-center gap-3">
+        <a id="btnWhatsApp" href="#" target="_blank" class="btn-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl no-underline inline-flex items-center gap-2 shadow-lg shadow-whatsapp/20 transition-all">
+          <i class="fab fa-whatsapp"></i> Compartilhar
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <main class="flex-1 max-w-6xl mx-auto px-4 py-8 sm:py-12 w-full">
+
+    <!-- Loading -->
+    <div id="loadingState" class="text-center py-20">
+      <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-green-500 border-t-transparent"></div>
+      <p class="mt-4 text-gray-500 text-sm">Carregando catálogo...</p>
+    </div>
+
+    <!-- Erro / Sem dados -->
+    <div id="emptyState" class="hidden text-center py-20">
+      <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-6">
+        <i class="fas fa-store text-3xl text-slate-300"></i>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 mb-2">Nenhum catálogo encontrado</h2>
+      <p class="text-sm text-slate-500 mb-8">Faça upload de uma planilha para gerar seu catálogo.</p>
+      <a href="/" class="btn-primary text-white font-bold px-8 py-4 rounded-2xl no-underline inline-flex items-center gap-2 shadow-lg">
+        <i class="fas fa-upload"></i> Fazer upload
+      </a>
+    </div>
+
+    <!-- Catálogo -->
+    <div id="catalogState" class="hidden space-y-8">
+
+      <!-- Cabeçalho do catálogo -->
+      <div class="text-center space-y-3">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Seu Catálogo</h1>
+        <p class="text-slate-500 max-w-md mx-auto">Seus produtos organizados e prontos para compartilhar com seus clientes.</p>
+      </div>
+
+      <!-- Resumo -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+            <i class="fas fa-file-excel text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-900" id="catalogFileName">—</p>
+            <p class="text-xs text-slate-500"><span id="catalogCount">0</span> produtos</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl border-0 cursor-pointer transition-colors">
+            <i class="fas fa-print mr-1.5"></i> Imprimir
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid de produtos -->
+      <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <!-- Renderizado via JS -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-12 px-4 bg-slate-950 text-slate-500 text-center text-xs space-y-2">
+    <p>&copy; 2026 ZapCatálogo. Todos os direitos reservados.</p>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ─── Verifica acesso (paywall) ───
+      var externalRef = localStorage.getItem('zapcatalogo_payment_ref');
+      var approved = localStorage.getItem('zapcatalogo_payment_approved');
+
+      if (!approved || !externalRef) {
+        // Redireciona para pagamento
+        window.location.href = '/pagamento.html';
+        return;
+      }
+
+      var loadingState = document.getElementById('loadingState');
+      var emptyState = document.getElementById('emptyState');
+      var catalogState = document.getElementById('catalogState');
+      var productsGrid = document.getElementById('productsGrid');
+      var catalogFileName = document.getElementById('catalogFileName');
+      var catalogCount = document.getElementById('catalogCount');
+      var btnWhatsApp = document.getElementById('btnWhatsApp');
+
+      function fmtPrice(value) {
+        if (value === undefined || value === null) return '';
+        var num = parseFloat(String(value).replace(/[^0-9,.]/g, '').replace(',', '.'));
+        if (isNaN(num)) return String(value);
+        return 'R$ ' + num.toFixed(2).replace('.', ',');
+      }
+
+      function showState(stateId) {
+        [loadingState, emptyState, catalogState].forEach(function (el) {
+          el.classList.toggle('hidden', el.id !== stateId);
+        });
+      }
+
+      // ─── Carrega dados do sessionStorage (salvos no upload) ───
+      function carregarCatalogo() {
+        var stored = sessionStorage.getItem('zapcatalogo_upload_data');
+        if (!stored) {
+          showState('emptyState');
+          return;
+        }
+
+        var data;
+        try {
+          data = JSON.parse(stored);
+        } catch {
+          showState('emptyState');
+          return;
+        }
+
+        if (!data.data || !data.data.length) {
+          showState('emptyState');
+          return;
+        }
+
+        // Preenche resumo
+        catalogFileName.textContent = data.filename || 'Planilha enviada';
+        catalogCount.textContent = data.data.length;
+
+        // Renderiza produtos
+        var html = '';
+        data.data.forEach(function (prod, index) {
+          var nome = prod['Nome do Produto'] || prod['nome'] || prod['name'] || 'Produto';
+          var preco = prod['Preço'] || prod['preco'] || prod['price'] || '';
+          var desc = prod['Descrição'] || prod['descricao'] || prod['description'] || '';
+          var categoria = prod['Categoria'] || prod['categoria'] || prod['category'] || '';
+          var codigo = prod['Código'] || prod['codigo'] || prod['sku'] || '';
+          var estoque = prod['Estoque'] || prod['estoque'] || prod['stock'] || '';
+
+          html += '<div class="product-card">' +
+            '<div class="flex items-start gap-4">' +
+              '<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center shrink-0">' +
+                '<i class="fas fa-box text-green-600 text-lg"></i>' +
+              '</div>' +
+              '<div class="flex-1 min-w-0">' +
+                '<h3 class="font-bold text-slate-900 text-base truncate">' + escapeHtml(nome) + '</h3>' +
+                (preco ? '<p class="text-green-600 font-bold text-lg mt-0.5">' + fmtPrice(preco) + '</p>' : '') +
+                (desc ? '<p class="text-sm text-slate-500 mt-1 line-clamp-2">' + escapeHtml(desc) + '</p>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">' +
+              (categoria ? '<span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">' + escapeHtml(categoria) + '</span>' : '') +
+              (codigo ? '<span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">#' + escapeHtml(codigo) + '</span>' : '') +
+              (estoque ? '<span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">Estoque: ' + escapeHtml(estoque) + '</span>' : '') +
+            '</div>' +
+          '</div>';
+        });
+
+        productsGrid.innerHTML = html;
+        showState('catalogState');
+
+        // Atualiza link do WhatsApp
+        var total = data.data.length;
+        var msg = 'Olá! Confira meu catálogo com ' + total + ' produtos 🛍️';
+        btnWhatsApp.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // ─── Inicializar ───
+      carregarCatalogo();
+
+    })();
+  </script>
+
+</body>
+</html>

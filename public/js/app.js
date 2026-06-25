@@ -460,10 +460,22 @@
     errorEl.classList.add('hidden');
 
     try {
-      var response = await fetch('/api/upload', { method: 'POST', body: formData });
+      var response = await fetch((window.API_URL || '') + '/api/upload', { method: 'POST', body: formData });
       var data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Erro ao processar arquivo');
-      window.location.href = '/?step=2';
+
+      // Salva dados do upload no sessionStorage para a tela de catálogo
+      sessionStorage.setItem('zapcatalogo_upload_data', JSON.stringify({
+        filename: data.filename,
+        sheets: data.sheets,
+        activeSheet: data.activeSheet,
+        rowCount: data.rowCount,
+        columns: data.columns,
+        data: data.data,
+      }));
+
+      // Redireciona para pagamento
+      window.location.href = '/pagamento.html';
     } catch (err) {
       errorText.textContent = err.message;
       errorEl.classList.remove('hidden');

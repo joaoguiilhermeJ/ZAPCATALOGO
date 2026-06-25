@@ -1,27 +1,9 @@
 {
-  "name": "zapcatalogo",
+  "name": "zapcatalogo-frontend",
   "version": "1.0.0",
-  "description": "ZapCatálogo - Catálogo de produtos com integração WhatsApp",
-  "type": "module",
-  "main": "api/index.js",
+  "description": "ZapCatálogo — Frontend do catálogo de produtos para WhatsApp",
+  "private": true,
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
-  },
-  "keywords": [
-    "catalogo",
-    "produtos",
-    "whatsapp",
-    "api"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "exceljs": "^4.4.0",
-    "express": "^4.18.2",
-    "multer": "^2.0.0",
-    "xlsx": "^0.18.5"
+    "dev": "npx serve public/ -l 3000"
   }
 }
