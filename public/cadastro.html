@@ -30,7 +30,7 @@
       }
     }
   </script>
-  <script>window.API_URL = window.API_URL || 'http://localhost:3001';</script>
+  <script src="js/api-config.js"></script>
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -454,7 +454,30 @@
               <p class="text-[11px] text-slate-400 mt-1.5 ml-1">Usado para receber pedidos dos seus clientes</p>
             </div>
 
-            <!-- 3. Upload da Logo -->
+            <!-- 3. Upload da Planilha -->
+            <div>
+              <label class="cadastro-label">
+                <i class="fas fa-file-excel text-green-600 mr-1.5"></i> Planilha de Produtos
+              </label>
+              <div id="sheetDropzone" class="cadastro-logo-zone" style="cursor:pointer;">
+                <input type="file" id="sheetInput" accept=".xlsx,.xls" class="hidden">
+                <div id="sheetPlaceholder" class="flex flex-col items-center gap-2">
+                  <i class="fas fa-cloud-upload-alt text-2xl text-slate-300"></i>
+                  <p class="text-sm font-semibold text-slate-600">Clique ou arraste sua planilha</p>
+                  <p class="text-[11px] text-slate-400">.xlsx ou .xls</p>
+                </div>
+                <div id="sheetFileInfo" class="hidden flex flex-col items-center gap-1">
+                  <i class="fas fa-file-excel text-2xl text-green-600"></i>
+                  <p class="text-sm font-semibold text-green-700" id="sheetFileName">—</p>
+                  <p class="text-[11px] text-slate-400" id="sheetProductCount">0 produtos detectados</p>
+                </div>
+                <button type="button" id="sheetRemove" class="cadastro-logo-remove" aria-label="Remover planilha" style="display:none;">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. Upload da Logo -->
             <div>
               <label class="cadastro-label">
                 <i class="fas fa-image text-green-600 mr-1.5"></i> Logo da Loja
@@ -473,7 +496,7 @@
               </div>
             </div>
 
-            <!-- 4. Cor Tema -->
+            <!-- 5. Cor Tema da Página -->
             <div>
               <label class="cadastro-label">
                 <i class="fas fa-palette text-green-600 mr-1.5"></i> Cor Tema da Página
@@ -937,6 +960,86 @@
         schedulePreview();
       });
 
+      /* ─── Upload de Planilha ─── */
+      var sheetData = null; // { filename, data, ... }
+
+      var sheetDropzone = $('sheetDropzone');
+      var sheetInput = $('sheetInput');
+      var sheetPlaceholder = $('sheetPlaceholder');
+      var sheetFileInfo = $('sheetFileInfo');
+      var sheetFileName = $('sheetFileName');
+      var sheetProductCount = $('sheetProductCount');
+      var sheetRemove = $('sheetRemove');
+
+      sheetDropzone.addEventListener('click', function (e) {
+        if (e.target === sheetRemove || sheetRemove.contains(e.target)) return;
+        sheetInput.click();
+      });
+
+      sheetDropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+      });
+      sheetDropzone.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+      });
+      sheetDropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        var file = e.dataTransfer.files[0];
+        if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) handleSheetFile(file);
+      });
+
+      sheetInput.addEventListener('change', function () {
+        var file = this.files[0];
+        if (file) handleSheetFile(file);
+      });
+
+      function handleSheetFile(file) {
+        var formData = new FormData();
+        formData.append('file', file);
+
+        sheetPlaceholder.style.display = 'none';
+        sheetFileInfo.classList.remove('hidden');
+        sheetFileName.textContent = 'Enviando...';
+
+        fetch((window.API_URL || '') + '/api/upload', { method: 'POST', body: formData })
+          .then(function (r) {
+            if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || 'Erro ao processar'); });
+            return r.json();
+          })
+          .then(function (data) {
+            sheetData = {
+              filename: data.filename,
+              sheets: data.sheets,
+              activeSheet: data.activeSheet,
+              rowCount: data.rowCount,
+              columns: data.columns,
+              data: data.data,
+            };
+            sheetFileName.textContent = file.name;
+            sheetProductCount.textContent = data.rowCount + ' produto(s) detectado(s)';
+            sheetRemove.style.display = 'flex';
+            sheetDropzone.classList.add('has-logo');
+          })
+          .catch(function (err) {
+            sheetPlaceholder.style.display = 'flex';
+            sheetFileInfo.classList.add('hidden');
+            alert('Erro ao processar planilha: ' + err.message);
+          });
+      }
+
+      sheetRemove.addEventListener('click', function (e) {
+        e.stopPropagation();
+        sheetData = null;
+        sheetPlaceholder.style.display = 'flex';
+        sheetFileInfo.classList.add('hidden');
+        sheetRemove.style.display = 'none';
+        sheetDropzone.classList.remove('has-logo');
+        sheetInput.value = '';
+      });
+
       /* ─── Submit do Form ─── */
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -949,15 +1052,69 @@
         }
         nomeInput.classList.remove('error');
 
+        if (!sheetData) {
+          alert('Selecione uma planilha de produtos para continuar.');
+          return;
+        }
+
         btnSubmit.disabled = true;
         btnSubmit.classList.add('loading');
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando catálogo...';
 
-        setTimeout(function () {
-          form.style.display = 'none';
-          successMsg.classList.remove('hidden');
-          btnSubmit.style.display = 'none';
-        }, 1200);
+        // Salva dados no localStorage (fluxo existente via preview.html)
+        localStorage.setItem('zapcatalogo_store_data', JSON.stringify({
+          nome: state.nome,
+          whatsapp: whatsInput.value,
+          cor: state.cor,
+          logoDataURL: state.logoDataURL || null,
+        }));
+
+        // Salva dados dos produtos no sessionStorage
+        sessionStorage.setItem('zapcatalogo_upload_data', JSON.stringify(sheetData));
+
+        // Tenta criar catalogo na API
+        var apiUrl = window.API_URL;
+
+        // Prepara logo como base64 (sem prefixo data:)
+        var logoBase64 = null;
+        var logoMime = 'image/png';
+        if (state.logoDataURL) {
+          var parts = state.logoDataURL.split(',');
+          if (parts.length > 1) {
+            logoBase64 = parts[1];
+            var mimeMatch = state.logoDataURL.match(/^data:(image\/\w+);/);
+            if (mimeMatch) logoMime = mimeMatch[1];
+          }
+        }
+
+        var payload = JSON.stringify({
+          nome_loja: state.nome,
+          whatsapp: whatsInput.value,
+          cor_tema: state.cor,
+          logo_base64: logoBase64,
+          logo_mimetype: logoMime,
+          produtos: sheetData.data,
+        });
+
+        fetch(apiUrl + '/api/catalogos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.success && data.catalogo && data.catalogo.catalog_url) {
+              // Redireciona para a URL publica do catalogo
+              window.location.href = data.catalogo.catalog_url;
+            } else {
+              // Fallback: preview local
+              window.location.href = '/preview.html';
+            }
+          })
+          .catch(function () {
+            // Fallback: preview local se API falhar
+            window.location.href = '/preview.html';
+          });
       });
 
       /* ─── Limpar erro ao digitar ─── */

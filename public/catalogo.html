@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
   <title>ZapCatálogo — Meu Catálogo</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -18,7 +19,7 @@
       }
     }
   </script>
-  <script>window.API_URL = window.API_URL || 'http://localhost:3001';</script>
+  <script src="js/api-config.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -37,6 +38,58 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.10);
       transform: translateY(-2px);
     }
+
+    /* ─── Modal de pagamento ─── */
+    .payment-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .payment-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .payment-modal {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .payment-overlay.open .payment-modal {
+      transform: translateY(0) scale(1);
+    }
+    @media (max-width: 640px) {
+      .payment-modal { padding: 1.5rem; }
+    }
+    #wallet_container {
+      min-height: 60px;
+      width: 100%;
+    }
+    #wallet_container iframe {
+      max-width: 100% !important;
+    }
+
+    /* ─── Blur do catálogo quando não pago ─── */
+    .catalog-blurred {
+      filter: blur(4px);
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body class="bg-slatecustom-light text-slatecustom-text font-sans antialiased min-h-screen flex flex-col">
@@ -49,7 +102,8 @@
              loading="lazy" onerror="this.onerror=null; this.src='image/ZAPCATALOGO.png'">
       </a>
       <div class="flex items-center gap-3">
-        <a id="btnWhatsApp" href="#" target="_blank" class="btn-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl no-underline inline-flex items-center gap-2 shadow-lg shadow-whatsapp/20 transition-all">
+        <a id="btnWhatsApp" href="#" target="_blank"
+           class="btn-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl no-underline inline-flex items-center gap-2 shadow-lg shadow-whatsapp/20 transition-all">
           <i class="fab fa-whatsapp"></i> Compartilhar
         </a>
       </div>
@@ -77,38 +131,57 @@
       </a>
     </div>
 
-    <!-- Catálogo -->
+    <!-- Catálogo (pode estar blurred se não pago) -->
     <div id="catalogState" class="hidden space-y-8">
+      <div id="catalogWrapper">
 
-      <!-- Cabeçalho do catálogo -->
-      <div class="text-center space-y-3">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Seu Catálogo</h1>
-        <p class="text-slate-500 max-w-md mx-auto">Seus produtos organizados e prontos para compartilhar com seus clientes.</p>
-      </div>
-
-      <!-- Resumo -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-            <i class="fas fa-file-excel text-green-600 text-xl"></i>
+        <!-- Banner de paywall -->
+        <div id="paywallBanner" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-6 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <i class="fas fa-lock text-amber-600"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-amber-900">Catálogo bloqueado</p>
+              <p class="text-xs text-amber-700">Libere o acesso para compartilhar no WhatsApp</p>
+            </div>
           </div>
-          <div>
-            <p class="text-sm font-semibold text-slate-900" id="catalogFileName">—</p>
-            <p class="text-xs text-slate-500"><span id="catalogCount">0</span> produtos</p>
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="window.print()" class="text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl border-0 cursor-pointer transition-colors">
-            <i class="fas fa-print mr-1.5"></i> Imprimir
+          <button id="btnAbrirPagamento"
+                  class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl border-0 cursor-pointer shadow-lg hover:shadow-xl transition-all shrink-0">
+            <i class="fas fa-lock-open mr-1.5"></i> Liberar por R$ 15
           </button>
         </div>
-      </div>
 
-      <!-- Grid de produtos -->
-      <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <!-- Renderizado via JS -->
-      </div>
+        <!-- Cabeçalho do catálogo -->
+        <div class="text-center space-y-3 mt-6">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Seu Catálogo</h1>
+          <p class="text-slate-500 max-w-md mx-auto">Seus produtos organizados e prontos para compartilhar com seus clientes.</p>
+        </div>
 
+        <!-- Resumo -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4 mt-6">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="fas fa-file-excel text-green-600 text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-900" id="catalogFileName">—</p>
+              <p class="text-xs text-slate-500"><span id="catalogCount">0</span> produtos</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="window.print()" class="text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl border-0 cursor-pointer transition-colors">
+              <i class="fas fa-print mr-1.5"></i> Imprimir
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid de produtos -->
+        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
+          <!-- Renderizado via JS -->
+        </div>
+
+      </div>
     </div>
   </main>
 
@@ -117,20 +190,65 @@
     <p>&copy; 2026 ZapCatálogo. Todos os direitos reservados.</p>
   </footer>
 
+  <!-- ─── MODAL DE PAGAMENTO ─── -->
+  <div id="paymentOverlay" class="payment-overlay">
+    <div class="payment-modal">
+      <!-- Loading interno -->
+      <div id="modalLoading" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-500 border-t-transparent"></div>
+        <p class="mt-3 text-gray-500 text-sm">Preparando pagamento...</p>
+      </div>
+
+      <!-- Conteúdo do modal -->
+      <div id="modalContent" class="hidden">
+        <!-- Ícone -->
+        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
+          <i class="fas fa-lock text-xl text-white"></i>
+        </div>
+
+        <h2 class="text-xl font-extrabold text-slate-900 text-center mb-1">Libere seu Catálogo</h2>
+        <p class="text-sm text-slate-500 text-center mb-6">
+          Acesso vitalício ao catálogo digital por apenas:
+        </p>
+
+        <div class="text-center mb-6">
+          <span class="text-4xl font-extrabold text-slate-900">R$ 15</span>
+          <span class="text-slate-400 block text-sm mt-0.5">Pagamento único</span>
+        </div>
+
+        <!-- Container do Wallet Brick -->
+        <div id="wallet_container"></div>
+
+        <!-- Botão pagar (fallback) -->
+        <button id="btnPagarModal"
+                class="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-2xl text-base transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 border-0 cursor-pointer">
+          <i class="fa-brands fa-mercadopago text-xl"></i>
+          Pagar com Mercado Pago
+        </button>
+
+        <p class="text-xs text-slate-400 text-center mt-4">
+          <i class="fas fa-shield-alt mr-1"></i>
+          Pagamento 100% seguro · Aceitamos PIX e cartão
+        </p>
+
+        <div id="modalStatus" class="hidden mt-4 text-center text-sm"></div>
+      </div>
+
+      <!-- Botão fechar -->
+      <button id="btnFecharModal" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center border-0 cursor-pointer transition-colors text-slate-500 text-sm">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
   <script>
     (function () {
       'use strict';
 
-      // ─── Verifica acesso (paywall) ───
-      var externalRef = localStorage.getItem('zapcatalogo_payment_ref');
-      var approved = localStorage.getItem('zapcatalogo_payment_approved');
+      // ─── Chave pública MP ───
+      var MP_PUBLIC_KEY = 'TEST-a121440f-f3e0-429e-845e-15edcf9b6d27';
 
-      if (!approved || !externalRef) {
-        // Redireciona para pagamento
-        window.location.href = '/pagamento.html';
-        return;
-      }
-
+      // ─── Elementos DOM ───
       var loadingState = document.getElementById('loadingState');
       var emptyState = document.getElementById('emptyState');
       var catalogState = document.getElementById('catalogState');
@@ -138,12 +256,37 @@
       var catalogFileName = document.getElementById('catalogFileName');
       var catalogCount = document.getElementById('catalogCount');
       var btnWhatsApp = document.getElementById('btnWhatsApp');
+      var paywallBanner = document.getElementById('paywallBanner');
+      var btnAbrirPagamento = document.getElementById('btnAbrirPagamento');
+      var catalogWrapper = document.getElementById('catalogWrapper');
 
+      // Modal
+      var paymentOverlay = document.getElementById('paymentOverlay');
+      var btnFecharModal = document.getElementById('btnFecharModal');
+      var btnPagarModal = document.getElementById('btnPagarModal');
+      var modalLoading = document.getElementById('modalLoading');
+      var modalContent = document.getElementById('modalContent');
+      var modalStatus = document.getElementById('modalStatus');
+      var walletContainer = document.getElementById('wallet_container');
+
+      // ─── Estado ───
+      var mpInstance = null;
+      var bricksLoaded = false;
+      var paymentApproved = localStorage.getItem('zapcatalogo_payment_approved') === 'true';
+      var paymentRef = localStorage.getItem('zapcatalogo_payment_ref');
+
+      // ─── Utilitários ───
       function fmtPrice(value) {
         if (value === undefined || value === null) return '';
         var num = parseFloat(String(value).replace(/[^0-9,.]/g, '').replace(',', '.'));
         if (isNaN(num)) return String(value);
         return 'R$ ' + num.toFixed(2).replace('.', ',');
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
       }
 
       function showState(stateId) {
@@ -152,7 +295,129 @@
         });
       }
 
-      // ─── Carrega dados do sessionStorage (salvos no upload) ───
+      function showModalStatus(msg, isError) {
+        modalStatus.classList.remove('hidden');
+        modalStatus.innerHTML = '<span class="' + (isError ? 'text-red-600' : 'text-green-600') + '">' + msg + '</span>';
+      }
+
+      // ─── Atualiza visibilidade do paywall ───
+      function updatePaywall() {
+        if (paymentApproved) {
+          paywallBanner.classList.add('hidden');
+          catalogWrapper.classList.remove('catalog-blurred');
+          btnWhatsApp.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          paywallBanner.classList.remove('hidden');
+          catalogWrapper.classList.add('catalog-blurred');
+          btnWhatsApp.classList.add('opacity-50', 'pointer-events-none');
+        }
+      }
+
+      // ─── Inicializa SDK do Mercado Pago ───
+      function initMpSdk() {
+        try {
+          mpInstance = new MercadoPago(MP_PUBLIC_KEY);
+          bricksLoaded = true;
+        } catch (e) {
+          console.error('[MP] Erro ao inicializar SDK:', e);
+        }
+      }
+
+      // ─── Renderiza Wallet Brick no modal ───
+      function renderWalletBrick(preferenceId) {
+        if (!mpInstance || !bricksLoaded) {
+          showModalStatus('Erro ao carregar meio de pagamento. Recarregue a página.', true);
+          return;
+        }
+
+        btnPagarModal.classList.add('hidden');
+        walletContainer.innerHTML = '';
+
+        mpInstance.bricks().create('wallet', 'wallet_container', {
+          initialization: { preferenceId: preferenceId },
+          callbacks: {
+            onReady: function () {
+              console.log('[MP Wallet] Brick pronto');
+            },
+            onSubmit: function () {
+              console.log('[MP Wallet] Usuário submeteu pagamento');
+            },
+            onError: function (error) {
+              console.error('[MP Wallet] Erro:', error);
+              showModalStatus('Erro ao processar pagamento. Tente novamente.', true);
+              btnPagarModal.classList.remove('hidden');
+            },
+          },
+        }).then(function () {
+          // Brick criado com sucesso — fica visível automaticamente
+        }).catch(function (err) {
+          console.error('[MP Wallet] Falha ao criar brick:', err);
+          showModalStatus('Erro ao carregar opções de pagamento.', true);
+          btnPagarModal.classList.remove('hidden');
+        });
+      }
+
+      // ─── Abre modal e inicia fluxo de pagamento ───
+      function abrirModalPagamento() {
+        // Reseta estado do modal
+        modalLoading.classList.remove('hidden');
+        modalContent.classList.add('hidden');
+        modalStatus.classList.add('hidden');
+        btnPagarModal.classList.remove('hidden');
+        walletContainer.innerHTML = '';
+        paymentOverlay.classList.add('open');
+
+        // Cria preferência
+        fetch((window.API_URL || '') + '/api/payment/create', { method: 'POST' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.success) throw new Error(data.error || 'Erro ao criar pagamento');
+
+            paymentRef = data.externalRef;
+            localStorage.setItem('zapcatalogo_payment_ref', paymentRef);
+
+            modalLoading.classList.add('hidden');
+            modalContent.classList.remove('hidden');
+
+            renderWalletBrick(data.preferenceId);
+          })
+          .catch(function (err) {
+            modalLoading.classList.add('hidden');
+            modalContent.classList.remove('hidden');
+            showModalStatus(err.message, true);
+          });
+      }
+
+      // ─── Fecha modal ───
+      function fecharModal() {
+        paymentOverlay.classList.remove('open');
+      }
+
+      // ─── Verifica pagamento anterior no backend ───
+      function verificarPagamentoAnterior() {
+        if (!paymentRef) return false;
+
+        fetch((window.API_URL || '') + '/api/payment/status/' + encodeURIComponent(paymentRef))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.approved) {
+              paymentApproved = true;
+              localStorage.setItem('zapcatalogo_payment_approved', 'true');
+              updatePaywall();
+            } else {
+              localStorage.removeItem('zapcatalogo_payment_approved');
+              paymentApproved = false;
+              updatePaywall();
+            }
+          })
+          .catch(function () {
+            // Fallback — mantém estado atual
+          });
+
+        return true;
+      }
+
+      // ─── Carrega dados do catálogo ───
       function carregarCatalogo() {
         var stored = sessionStorage.getItem('zapcatalogo_upload_data');
         if (!stored) {
@@ -179,7 +444,7 @@
 
         // Renderiza produtos
         var html = '';
-        data.data.forEach(function (prod, index) {
+        data.data.forEach(function (prod) {
           var nome = prod['Nome do Produto'] || prod['nome'] || prod['name'] || 'Produto';
           var preco = prod['Preço'] || prod['preco'] || prod['price'] || '';
           var desc = prod['Descrição'] || prod['descricao'] || prod['description'] || '';
@@ -211,18 +476,36 @@
 
         // Atualiza link do WhatsApp
         var total = data.data.length;
-        var msg = 'Olá! Confira meu catálogo com ' + total + ' produtos 🛍️';
-        btnWhatsApp.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+        btnWhatsApp.href = 'https://wa.me/?text=' + encodeURIComponent('Olá! Confira meu catálogo com ' + total + ' produtos 🛍️');
+
+        // Atualiza paywall
+        updatePaywall();
       }
 
-      function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+      // ─── Inicialização ───
+      function init() {
+        initMpSdk();
+
+        // Verifica se já pagou
+        if (paymentApproved && paymentRef) {
+          verificarPagamentoAnterior();
+        }
+
+        carregarCatalogo();
       }
 
-      // ─── Inicializar ───
-      carregarCatalogo();
+      // ─── Eventos ───
+      btnAbrirPagamento.addEventListener('click', abrirModalPagamento);
+      btnPagarModal.addEventListener('click', abrirModalPagamento);
+      btnFecharModal.addEventListener('click', fecharModal);
+
+      // Fecha modal ao clicar fora
+      paymentOverlay.addEventListener('click', function (e) {
+        if (e.target === paymentOverlay) fecharModal();
+      });
+
+      // Iniciar
+      init();
 
     })();
   </script>

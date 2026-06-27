@@ -30,8 +30,8 @@
       }
     }
   </script>
-  <!-- Configuração da URL da API -->
-  <script>window.API_URL = window.API_URL || 'http://localhost:3001';</script>
+  <!-- Configuração dinâmica da URL da API -->
+  <script src="js/api-config.js"></script>
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -119,160 +119,66 @@
         <p class="text-slate-500 max-w-xl mx-auto">Selecione seu nicho e veja o catálogo se transformar em tempo real.</p>
       </div>
 
-      <!-- Grid: Seletores à Esquerda, Smartphone à Direita -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Preview único: Mockup grande + segment control + CTA -->
+      <div class="flex flex-col items-center gap-6 max-w-lg mx-auto lg:max-w-none">
 
-        <!-- Coluna da Esquerda: Cards de Nicho -->
-        <div class="lg:col-span-6 space-y-4">
-
-          <!-- Pills mobile: visível apenas abaixo de LG -->
-          <div class="modelos-mobile-tabs lg:hidden w-full justify-center">
-            <button class="modelos-mobile-tab active" data-modelo="aura" onclick="switchModelo('aura')">
-              <i class="fas fa-tshirt mr-1.5"></i> AURA
-            </button>
-            <button class="modelos-mobile-tab" data-modelo="soleil" onclick="switchModelo('soleil')">
-              <i class="fas fa-shoe-prints mr-1.5"></i> SOLEIL
-            </button>
-            <button class="modelos-mobile-tab" data-modelo="mercadinho" onclick="switchModelo('mercadinho')">
-              <i class="fas fa-shopping-basket mr-1.5"></i> MERCADINHO
-            </button>
-          </div>
-
-          <!-- Card Aura -->
-          <div onclick="switchModelo('aura')" id="card-aura" data-modelo="aura" class="modelos-tab active w-full text-left p-6 rounded-3xl border-2 border-whatsapp bg-whatsapp-bg/20 transition-all hover:shadow-md flex items-start gap-4 cursor-pointer group">
-            <div class="w-5 h-5 rounded-full border-2 border-whatsapp flex items-center justify-center shrink-0 mt-1 transition-colors bg-whatsapp">
-              <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
-            </div>
-            <div class="space-y-2 flex-grow">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-lg text-slate-900 group-hover:text-whatsapp transition-colors">Moda &amp; Vestuário</h3>
-                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-purple-100 text-purple-700 rounded-md">AURA</span>
-              </div>
-              <p class="text-sm text-slate-500">Modelo minimalista para brechós, lojas de roupa e acessórios. Tons elegantes e vitrine limpa.</p>
-              <div class="flex flex-wrap gap-2 text-xs text-slate-400">
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Off-white</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Lilás</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Esmeralda</span>
-              </div>
-              <!-- Botão Real de Download (Isolado por stopPropagation) -->
-              <div class="pt-2">
-                <a href="downloads/modelo_aura.xlsx" download="modelo_aura.xlsx" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 px-3.5 py-2 rounded-xl shadow-sm transition-all no-underline">
-                  <i class="fa-solid fa-download"></i> Planilha Aura
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card Soleil -->
-          <div onclick="switchModelo('soleil')" id="card-soleil" data-modelo="soleil" class="modelos-tab w-full text-left p-6 rounded-3xl border-2 border-slate-200 bg-white transition-all hover:shadow-md flex items-start gap-4 cursor-pointer group">
-            <div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0 mt-1 transition-colors">
-              <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
-            </div>
-            <div class="space-y-2 flex-grow">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-lg text-slate-800 group-hover:text-amber-700 transition-colors">Calçados &amp; Esportes</h3>
-                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md">SOLEIL</span>
-              </div>
-              <p class="text-sm text-slate-500">Catálogo arejado para lojas de calçados, artigos esportivos e acessórios. Cores terrosas.</p>
-              <div class="flex flex-wrap gap-2 text-xs text-slate-400">
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Areia</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Verde-petróleo</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Laranja</span>
-              </div>
-              <!-- Botão Real de Download -->
-              <div class="pt-2">
-                <a href="downloads/modelo_soleil.xlsx" download="modelo_soleil.xlsx" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 px-3.5 py-2 rounded-xl shadow-sm transition-all no-underline">
-                  <i class="fa-solid fa-download"></i> Planilha Soleil
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card Mercadinho -->
-          <div onclick="switchModelo('mercadinho')" id="card-mercadinho" data-modelo="mercadinho" class="modelos-tab w-full text-left p-6 rounded-3xl border-2 border-slate-200 bg-white transition-all hover:shadow-md flex items-start gap-4 cursor-pointer group">
-            <div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0 mt-1 transition-colors">
-              <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
-            </div>
-            <div class="space-y-2 flex-grow">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-lg text-slate-800 group-hover:text-orange-700 transition-colors">Supermercado &amp; Geral</h3>
-                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-orange-100 text-orange-800 rounded-md">MERCADINHO DA VILA</span>
-              </div>
-              <p class="text-sm text-slate-500">Layout acolhedor para mercados, hortifrúti, empórios e delivery de alimentos.</p>
-              <div class="flex flex-wrap gap-2 text-xs text-slate-400">
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Verde-hortelã</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Laranja</span>
-                <span class="bg-slate-100 px-2 py-0.5 rounded">Madeira</span>
-              </div>
-              <!-- Botão Real de Download -->
-              <div class="pt-2">
-                <a href="downloads/modelo_mercadinho.xlsx" download="modelo_mercadinho.xlsx" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-orange-700 hover:bg-orange-800 px-3.5 py-2 rounded-xl shadow-sm transition-all no-underline">
-                  <i class="fa-solid fa-download"></i> Planilha Mercadinho
-                </a>
-              </div>
-            </div>
-          </div>
-
+        <!-- Segment Control (abas de nicho) -->
+        <div class="flex bg-slate-100 rounded-2xl p-1 shadow-sm overflow-x-auto w-full max-w-md mx-auto">
+          <button class="modelos-tab active flex-1 text-center px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all" data-modelo="aura" onclick="switchModelo('aura')">
+            <i class="fas fa-tshirt mr-1.5"></i> Moda
+          </button>
+          <button class="modelos-tab flex-1 text-center px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all" data-modelo="soleil" onclick="switchModelo('soleil')">
+            <i class="fas fa-shoe-prints mr-1.5"></i> Calçados
+          </button>
+          <button class="modelos-tab flex-1 text-center px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all" data-modelo="mercadinho" onclick="switchModelo('mercadinho')">
+            <i class="fas fa-shopping-basket mr-1.5"></i> Mercado
+          </button>
         </div>
 
-        <!-- Coluna da Direita: Mockup Phone -->
-        <div class="lg:col-span-6 flex flex-col items-center justify-center relative w-full">
-          <!-- Brilho de Fundo -->
-          <div id="glow-effect" class="absolute w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-colors duration-500"></div>
+        <!-- Brilho de Fundo -->
+        <div id="glow-effect" class="absolute w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-colors duration-500 hidden lg:block"></div>
 
-          <!-- CONTAINER DO SMARTPHONE -->
-          <div class="mockup-phone" id="mockupPhone">
-            <!-- Notch e status: visíveis apenas na moldura (LG+) -->
-            <div class="phone-notch lg:block hidden"></div>
-            <div class="phone-status lg:flex hidden" id="mockupStatus">
-              <span>9:41</span>
-              <span><i class="fas fa-wifi"></i> <i class="fas fa-signal ml-1"></i> <i class="fas fa-battery-full ml-1"></i></span>
-            </div>
-
-            <!-- Conteúdo do catálogo (sempre visível) -->
-            <div class="mockup-content-wrap" id="mockupContent">
-              <!-- Cabeçalho da loja -->
-              <div class="mockup-store-header" id="mockupStoreHeader">
-                <div class="mockup-store-logo" id="mockupLogo"></div>
-                <div>
-                  <div class="mockup-store-name" id="mockupStoreName"></div>
-                  <div class="mockup-store-sub" id="mockupStoreSub">Catálogo Digital</div>
-                </div>
-              </div>
-              <!-- Sacola / Carrinho -->
-              <div class="mockup-cart" id="mockupCart">
-                <i class="fas fa-shopping-bag"></i>
-                <span id="cartSummary">Sacola (0 itens)</span>
-              </div>
-              <!-- Produtos -->
-              <div class="mockup-products" id="mockupProducts"></div>
-            </div>
-
-            <!-- Footer dots: visíveis apenas na moldura -->
-            <div class="mockup-phone-footer lg:flex hidden" id="mockupPhoneFooter">
-              <span class="mockup-dot"></span>
-              <span class="mockup-dot"></span>
-              <span class="mockup-dot"></span>
-            </div>
+        <!-- Smartphone Mockup -->
+        <div class="mockup-phone" id="mockupPhone">
+          <div class="phone-notch lg:block hidden"></div>
+          <div class="phone-status lg:flex hidden" id="mockupStatus">
+            <span>9:41</span>
+            <span><i class="fas fa-wifi"></i> <i class="fas fa-signal ml-1"></i> <i class="fas fa-battery-full ml-1"></i></span>
           </div>
-
-          <!-- Badge + Link de download dinâmico abaixo do mockup -->
-          <div class="relative w-full flex flex-col items-center mt-4">
-            <span id="mockupDownloadBadge" class="text-[10px] font-semibold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full mb-1 tracking-wide whitespace-nowrap">
-              Modelo: Aura
-            </span>
-            <p class="text-xs text-gray-400 text-center max-w-[220px] mb-2">Arraste para os lados <span class="hidden lg:inline">ou clique nas abas</span> para trocar o modelo</p>
-            <a id="mockupDownloadLink"
-               href="downloads/modelo_aura.xlsx"
-               download="modelo_aura.xlsx"
-               class="btn-tab-download text-center w-full"
-               style="background:linear-gradient(135deg,#25d366,#128c7e);">
-              <i class="fas fa-download"></i> Baixar Planilha de Moda (Aura)
-            </a>
+          <div class="mockup-content-wrap" id="mockupContent">
+            <div class="mockup-store-header" id="mockupStoreHeader">
+              <div class="mockup-store-logo" id="mockupLogo"></div>
+              <div>
+                <div class="mockup-store-name" id="mockupStoreName"></div>
+                <div class="mockup-store-sub" id="mockupStoreSub">Catálogo Digital</div>
+              </div>
+            </div>
+            <div class="mockup-cart" id="mockupCart">
+              <i class="fas fa-shopping-bag"></i>
+              <span id="cartSummary">Sacola (0 itens)</span>
+            </div>
+            <div class="mockup-products" id="mockupProducts"></div>
+          </div>
+          <div class="mockup-phone-footer lg:flex hidden" id="mockupPhoneFooter">
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
           </div>
         </div>
 
-      </div><!-- Fim grid -->
+        <!-- CTA único de download -->
+        <div class="text-center w-full max-w-sm">
+          <a id="mockupDownloadLink"
+             href="downloads/modelo_aura.xlsx"
+             download="modelo_aura.xlsx"
+             class="btn-tab-download text-center w-full justify-center"
+             style="background:linear-gradient(135deg,#25d366,#128c7e);">
+            <i class="fas fa-download"></i> Baixar planilha modelo
+          </a>
+          <p class="text-xs text-gray-400 mt-2">A planilha já vem no formato certo — é só preencher.</p>
+        </div>
+
+      </div><!-- Fim preview -->
 
     </div>
   </section>

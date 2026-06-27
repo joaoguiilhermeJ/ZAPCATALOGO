@@ -288,43 +288,28 @@
     aura: {
       href: 'downloads/modelo_aura.xlsx',
       download: 'modelo_aura.xlsx',
-      label: 'Baixar Planilha de Moda (Aura)',
-      badge: 'Modelo: Aura',
+      label: 'Baixar planilha modelo',
     },
     soleil: {
       href: 'downloads/modelo_soleil.xlsx',
       download: 'modelo_soleil.xlsx',
-      label: 'Baixar Planilha de Calçados (Soleil)',
-      badge: 'Modelo: Soleil',
+      label: 'Baixar planilha modelo',
     },
     mercadinho: {
       href: 'downloads/modelo_mercadinho.xlsx',
       download: 'modelo_mercadinho.xlsx',
-      label: 'Baixar Planilha do Mercadinho',
-      badge: 'Modelo: Mercadinho',
+      label: 'Baixar planilha modelo',
     },
   };
 
-  /**
-   * Atualiza o link de download dinâmico abaixo do mockup
-   * e o indicador visual "Recomendado para este nicho".
-   */
   function updateDownloadButton(key) {
     var info = DOWNLOAD_MAP[key];
     if (!info) return;
 
-    // Link de download principal abaixo do mockup
     var dlLink = document.getElementById('mockupDownloadLink');
     if (dlLink) {
       dlLink.href = info.href;
       dlLink.download = info.download;
-      dlLink.innerHTML = '<i class="fas fa-download"></i> ' + info.label;
-    }
-
-    // Badge/indicador visual no canto do mockup
-    var badge = document.getElementById('mockupDownloadBadge');
-    if (badge) {
-      badge.textContent = info.badge;
     }
   }
 
@@ -332,27 +317,9 @@
      SWITCH DE MODELO (exposto globalmente para onclick)
      ═══════════════════════════════════════════════ */
   window.switchModelo = function (key) {
-    // Atualizar abas (único seletor para desktop e mobile)
-    document.querySelectorAll('.modelos-tab, .modelos-mobile-tab').forEach(function (tab) {
+    // Atualizar segment control
+    document.querySelectorAll('.modelos-tab').forEach(function (tab) {
       tab.classList.toggle('active', tab.dataset.modelo === key);
-    });
-
-    // Gerenciar visual dos cards de nicho (radio dots + borda ativa)
-    var cards = ['aura', 'soleil', 'mercadinho'];
-    cards.forEach(function (k) {
-      var card = document.getElementById('card-' + k);
-      if (!card) return;
-      var dot = card.children[0]; // .w-5 (radio outer circle)
-      var innerDot = dot && dot.children[0]; // .w-2.5 (radio inner fill)
-      if (k === key) {
-        card.className = 'modelos-tab active w-full text-left p-6 rounded-3xl border-2 border-whatsapp bg-whatsapp-bg/20 transition-all hover:shadow-md flex items-start gap-4 cursor-pointer group';
-        if (dot) { dot.className = 'w-5 h-5 rounded-full border-2 border-whatsapp flex items-center justify-center shrink-0 mt-1 bg-whatsapp transition-colors'; }
-        if (innerDot) { innerDot.className = 'w-2.5 h-2.5 rounded-full bg-white'; }
-      } else {
-        card.className = 'modelos-tab w-full text-left p-6 rounded-3xl border-2 border-slate-200 bg-white transition-all hover:shadow-md flex items-start gap-4 cursor-pointer group';
-        if (dot) { dot.className = 'w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0 mt-1 bg-transparent transition-colors'; }
-        if (innerDot) { innerDot.className = 'w-2.5 h-2.5 rounded-full bg-transparent'; }
-      }
     });
 
     // Atualizar o botão de download dinâmico
@@ -474,8 +441,8 @@
         data: data.data,
       }));
 
-      // Redireciona para pagamento
-      window.location.href = '/pagamento.html';
+      // Redireciona para o catálogo (paywall inline)
+      window.location.href = '/catalogo.html';
     } catch (err) {
       errorText.textContent = err.message;
       errorEl.classList.remove('hidden');
