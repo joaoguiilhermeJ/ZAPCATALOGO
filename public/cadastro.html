@@ -1011,6 +1011,8 @@
           })
           .then(function (data) {
             sheetData = {
+                file: file,
+
               filename: data.filename,
               sheets: data.sheets,
               activeSheet: data.activeSheet,
@@ -1041,73 +1043,105 @@
       });
 
       /* ─── Submit do Form ─── */
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
+      form.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        var nome = nomeInput.value.trim();
-        if (!nome) {
-          nomeInput.classList.add('error');
-          nomeInput.focus();
-          return;
-        }
-        nomeInput.classList.remove('error');
+            var nome = nomeInput.value.trim();
+            if (!nome) {
+              nomeInput.classList.add('error');
+              nomeInput.focus();
+              return;
+            }
+            nomeInput.classList.remove('error');
 
-        if (!sheetData) {
-          alert('Selecione uma planilha de produtos para continuar.');
-          return;
-        }
+            if (!sheetData) {
+              alert('Selecione uma planilha de produtos para continuar.');
+              return;
+            }
 
-        btnSubmit.disabled = true;
-        btnSubmit.classList.add('loading');
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando catálogo...';
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add('loading');
+            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando sua vitrine premium...';
 
-        // Salva dados no localStorage (fluxo existente via preview.html)
-        localStorage.setItem('zapcatalogo_store_data', JSON.stringify({
-          nome: state.nome,
-          whatsapp: whatsInput.value,
-          cor: state.cor,
-          logoDataURL: state.logoDataURL || null,
-        }));
+            // ---------- Etapa 1: criar catálogo (onboarding) ----------
+            var apiUrl = window.API_URL;
+            var formData = new FormData();
+            formData.append('nome_loja', state.nome);
+            formData.append('whatsapp', whatsInput.value);
+            formData.append('cor_tema', state.cor);
 
-        // Salva dados dos produtos no sessionStorage
-        sessionStorage.setItem('zapcatalogo_upload_data', JSON.stringify(sheetData));
+            // Se houver logo, converte dataURL para Blob e anexa
+            if (state.logoDataURL) {
+              const blob = dataURItoBlob(state.logoDataURL);
+              formData.append('logo', blob, 'logo.png');
+            }
 
-        // Tenta criar catalogo na API
-        var apiUrl = window.API_URL;
+            let onboardingRes;
+            try {
+              const resp = await fetch(apiUrl + '/api/onboarding', {
+                method: 'POST',
+                body: formData,
+              });
+              onboardingRes = await resp.json();
+            } catch (err) {
+              alert('Erro ao criar catálogo: ' + err.message);
+              resetSubmit();
+              return;
+            }
 
-        // Prepara logo como base64 (sem prefixo data:)
-        var logoBase64 = null;
-        var logoMime = 'image/png';
-        if (state.logoDataURL) {
-          var parts = state.logoDataURL.split(',');
-          if (parts.length > 1) {
-            logoBase64 = parts[1];
-            var mimeMatch = state.logoDataURL.match(/^data:(image\/\w+);/);
-            if (mimeMatch) logoMime = mimeMatch[1];
+            if (!onboardingRes.success) {
+              alert('Falha ao criar catálogo: ' + (onboardingRes.error || ''));
+              resetSubmit();
+              return;
+            }
+
+            const catalogId = onboardingRes.catalogo.id; // UUID
+            const slug = onboardingRes.catalogo.slug; // já será a hash segura
+
+            // ---------- Etapa 2: upload da planilha ----------
+            var sheetForm = new FormData();
+            sheetForm.append('file', sheetData.file); // keep original File object (need to store it)
+            sheetForm.append('catalogId', catalogId);
+
+            try {
+              const resp2 = await fetch(apiUrl + '/api/produtos/upload', {
+                method: 'POST',
+                body: sheetForm,
+              });
+              const sheetResult = await resp2.json();
+              if (!sheetResult.success) {
+                alert('Erro ao enviar planilha: ' + (sheetResult.error || ''));
+                resetSubmit();
+                return;
+              }
+            } catch (err) {
+              alert('Erro ao enviar planilha: ' + err.message);
+              resetSubmit();
+              return;
+            }
+
+            // Redireciona para a URL pública segura
+            window.location.href = (process.env.BASE_URL || '') + '/c/' + slug;
+          });
+
+          // Helper para converter dataURL -> Blob
+          function dataURItoBlob(dataURI) {
+            const byteString = atob(dataURI.split(',')[1]);
+            const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
           }
-        }
 
-        var payload = JSON.stringify({
-          nome_loja: state.nome,
-          whatsapp: whatsInput.value,
-          cor_tema: state.cor,
-          logo_base64: logoBase64,
-          logo_mimetype: logoMime,
-          produtos: sheetData.data,
-        });
-
-        fetch(apiUrl + '/api/catalogos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-        })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            if (data.success && data.catalogo && data.catalogo.catalog_url) {
-              // Redireciona para a URL publica do catalogo
-              window.location.href = data.catalogo.catalog_url;
-            } else {
-              // Fallback: preview local
+          function resetSubmit() {
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('loading');
+            btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
+          }
+        /* Legacy onboarding flow removed – new flow above handles onboarding and sheet upload */
               window.location.href = '/preview.html';
             }
           })
