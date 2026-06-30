@@ -4,6 +4,11 @@
   "description": "ZapCatálogo — Frontend do catálogo de produtos para WhatsApp",
   "private": true,
   "scripts": {
-    "dev": "npx serve public/ -l 3000"
+    "dev": "npx serve public/ -l 3000",
+    "start": "npx serve public/ -l 3000",
+    "dev:all": "npx concurrently \"cd BACKEND/ZAPCATALOGOBACKEND && node src/index.js\" \"npx serve public/ -l 3000\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }

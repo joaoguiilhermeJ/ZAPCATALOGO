@@ -145,7 +145,9 @@
     style.textContent =
       '.preview-btn-whatsapp { background: ' + cor + '; }' +
       '.preview-btn-whatsapp:hover { background: #075E54; }' +
-      '.preview-cart-fab { background: linear-gradient(135deg, ' + cor + ', #075E54); }';
+      '.preview-cart-fab { background: linear-gradient(135deg, ' + cor + ', #075E54); }' +
+      '.site-header { border-bottom: 2px solid ' + cor + '20; }' +
+      '.preview-store-logo { background: ' + cor + ' !important; }';
     document.head.appendChild(style);
   }
 
