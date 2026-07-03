@@ -368,7 +368,7 @@
           src="image/logo.png"
           alt="ZapCatálogo"
           class="header-logo"
-          width="1408" height="768"
+          width="140" height="40"
           loading="lazy"
           onerror="this.onerror=null; this.src='image/ZAPCATALOGO.png'"
         >
@@ -450,6 +450,7 @@
                 placeholder="(11) 99999-9999"
                 autocomplete="tel"
                 maxlength="16"
+                required
               >
               <p class="text-[11px] text-slate-400 mt-1.5 ml-1">Usado para receber pedidos dos seus clientes</p>
             </div>
@@ -482,7 +483,7 @@
               <label class="cadastro-label">
                 <i class="fas fa-image text-green-600 mr-1.5"></i> Logo da Loja
               </label>
-              <div id="logoDropzone" class="cadastro-logo-zone">
+              <div id="logoDropzone" class="cadastro-logo-zone" style="cursor:pointer;">
                 <input type="file" id="logoInput" accept="image/*" class="hidden">
                 <div id="logoPlaceholder" class="flex flex-col items-center gap-2">
                   <i class="fas fa-cloud-upload-alt text-2xl text-slate-300"></i>
@@ -490,7 +491,7 @@
                   <p class="text-[11px] text-slate-400">PNG, JPG · Máx 2MB</p>
                 </div>
                 <img id="logoPreview" class="cadastro-logo-preview mx-auto" alt="Preview da logo">
-                <button type="button" id="logoRemove" class="cadastro-logo-remove" aria-label="Remover logo">
+                <button type="button" id="logoRemove" class="cadastro-logo-remove" aria-label="Remover logo" style="display:none;">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -513,7 +514,7 @@
                 <!-- Seletor customizado -->
                 <label class="color-swatch-picker" title="Escolher cor personalizada">
                   <i class="fas fa-plus"></i>
-                  <input type="color" id="customColor" value="#128C7E">
+                  <input type="color" id="customColor" value="#8e7cc3">
                 </label>
               </div>
             </div>
@@ -527,18 +528,6 @@
             </div>
 
           </form>
-
-          <!-- Mensagem de sucesso (inicialmente oculta) -->
-          <div id="successMessage" class="hidden cadastro-success text-center py-6">
-            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
-              <i class="fas fa-check text-3xl text-white"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Loja cadastrada com sucesso!</h3>
-            <p class="text-sm text-slate-500 mb-6">Sua vitrine digital está pronta. Agora é só enviar os produtos.</p>
-            <a href="/" class="btn-cadastro inline-flex" style="width:auto; padding:14px 32px;">
-              <i class="fas fa-arrow-right"></i> Ir para Minha Loja
-            </a>
-          </div>
 
         </div>
       </div>
@@ -563,7 +552,7 @@
             <!-- Notch (desktop) -->
             <div class="cadastro-phone-notch"></div>
             <!-- Status Bar (desktop) -->
-            <div class="cadastro-phone-status">
+            <div class="cadastro-phone-status" id="phoneStatus">
               <span class="font-bold">9:41</span>
               <span><i class="fas fa-signal"></i> <i class="fas fa-wifi ml-1.5"></i> <i class="fas fa-battery-full ml-1.5"></i></span>
             </div>
@@ -618,7 +607,7 @@
 
               <!-- Bottom Tab Navigation (glassmorphism) -->
               <div class="cadastro-preview-footer">
-                <div class="cadastro-preview-tab active">
+                <div class="cadastro-preview-tab active" id="tabStore">
                   <i class="fas fa-store"></i>
                   <span>Início</span>
                 </div>
@@ -662,132 +651,240 @@
     (function () {
       'use strict';
 
+      /* ─── Utilitários de Resiliência & Performance ─── */
+
+      // Escape de HTML para mitigar vetores de XSS
+      function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, function (tag) {
+          return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[tag] || tag;
+        });
+      }
+
+      // Utilitário de Debounce para otimização de renderização
+      function debounce(func, wait) {
+        var timeout;
+        return function () {
+          var context = this;
+          var args = arguments;
+          clearTimeout(timeout);
+          timeout = setTimeout(function () {
+            func.apply(context, args);
+          }, wait);
+        };
+      }
+
+      // Gerenciador seguro de listeners usando WeakMap para prevenir Memory Leaks
+      var eventRegistry = new WeakMap();
+
+      function safeAddEventListener(element, event, listener, options) {
+        if (!element) return;
+        
+        var elementEvents = eventRegistry.get(element);
+        if (!elementEvents) {
+          elementEvents = new Map();
+          eventRegistry.set(element, elementEvents);
+        }
+        
+        var listenersSet = elementEvents.get(event);
+        if (!listenersSet) {
+          listenersSet = new Set();
+          elementEvents.set(event, listenersSet);
+        }
+        
+        // Remove qualquer listener idêntico anterior para garantir unicidade e prevenir vazamentos
+        element.removeEventListener(event, listener, options || false);
+        element.addEventListener(event, listener, options || false);
+        
+        listenersSet.add(listener);
+      }
+
+      // Sistema leve e reativo de Toast Notifications integrado ao Tailwind CSS
+      function showToast(message, type) {
+        type = type || 'error';
+        var container = document.getElementById('toastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toastContainer';
+          container.className = 'fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+          document.body.appendChild(container);
+        }
+
+        var toast = document.createElement('div');
+        var isSuccess = type === 'success';
+        var bgClass = isSuccess ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800';
+        var iconClass = isSuccess ? 'fa-circle-check text-emerald-500' : 'fa-circle-exclamation text-rose-500';
+
+        toast.className = 'flex items-center gap-3 p-4 rounded-xl border shadow-lg transition-all duration-300 transform translate-x-12 opacity-0 pointer-events-auto ' + bgClass;
+        toast.innerHTML = '<i class="fas ' + iconClass + ' text-lg shrink-0"></i>' +
+          '<p class="text-xs font-semibold flex-1 leading-relaxed">' + escapeHTML(message) + '</p>' +
+          '<button type="button" class="text-slate-400 hover:text-slate-600 transition-colors shrink-0" aria-label="Fechar">' +
+            '<i class="fas fa-times"></i>' +
+          '</button>';
+
+        container.appendChild(toast);
+
+        // Dispara o reflow e a animação de entrada
+        setTimeout(function () {
+          toast.classList.remove('translate-x-12', 'opacity-0');
+        }, 10);
+
+        var closeBtn = toast.querySelector('button');
+        var dismiss = function () {
+          toast.classList.add('translate-x-12', 'opacity-0');
+          setTimeout(function () {
+            toast.remove();
+            if (container.children.length === 0) {
+              container.remove();
+            }
+          }, 300);
+        };
+
+        safeAddEventListener(closeBtn, 'click', dismiss);
+
+        // Auto-dismiss após 4.5 segundos
+        setTimeout(dismiss, 4500);
+      }
+
+      // Chamada HTTP tolerante a falhas com timeout rígido usando AbortController
+      async function fetchWithTimeout(url, options, timeoutMs) {
+        timeoutMs = timeoutMs || 10000;
+        options = options || {};
+        var controller = new AbortController();
+        options.signal = controller.signal;
+
+        var timer = setTimeout(function () {
+          controller.abort();
+        }, timeoutMs);
+
+        try {
+          var response = await fetch(url, options);
+          clearTimeout(timer);
+          return response;
+        } catch (err) {
+          clearTimeout(timer);
+          if (err.name === 'AbortError') {
+            throw new Error('Tempo limite excedido (' + (timeoutMs / 1000) + 's). O servidor demorou demais para responder.');
+          }
+          throw err;
+        }
+      }
+
+      // Algoritmo matemático YIQ para contraste dinâmico de luminosidade
+      function getContrastColorYIQ(hex) {
+        if (!hex) return '#ffffff';
+        var cleanHex = hex.replace('#', '');
+        if (cleanHex.length === 3) {
+          cleanHex = cleanHex[0] + cleanHex[0] + cleanHex[1] + cleanHex[1] + cleanHex[2] + cleanHex[2];
+        }
+        var r = parseInt(cleanHex.substring(0, 2), 16);
+        var g = parseInt(cleanHex.substring(2, 4), 16);
+        var b = parseInt(cleanHex.substring(4, 6), 16);
+        
+        var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        
+        // Retorna cinza escuro para fundos claros, e branco puro para fundos escuros
+        return yiq >= 128 ? '#1e293b' : '#ffffff';
+      }
+
       /* ─── Referências DOM ─── */
       var $ = function (id) { return document.getElementById(id); };
 
-      var form          = $('formCadastro');
-      var nomeInput     = $('nomeEmpresa');
-      var whatsInput    = $('whatsapp');
-      var charCount     = $('charCount');
-      var logoDropzone  = $('logoDropzone');
-      var logoInput     = $('logoInput');
-      var logoPreview   = $('logoPreview');
+      var form            = $('formCadastro');
+      var nomeInput       = $('nomeEmpresa');
+      var whatsInput      = $('whatsapp');
+      var charCount       = $('charCount');
+      var logoDropzone    = $('logoDropzone');
+      var logoInput       = $('logoInput');
+      var logoPreview     = $('logoPreview');
       var logoPlaceholder = $('logoPlaceholder');
-      var logoRemove    = $('logoRemove');
-      var colorSwatches = document.querySelectorAll('.color-swatch');
-      var customColor   = $('customColor');
-      var btnSubmit     = $('btnSubmit');
-      var successMsg    = $('successMessage');
-      var previewGlow   = $('previewGlow');
-      var previewContent = $('previewContent');
+      var logoRemove      = $('logoRemove');
+      var colorSwatches   = document.querySelectorAll('.color-swatch');
+      var customColor     = $('customColor');
+      var btnSubmit       = $('btnSubmit');
+      var previewGlow     = $('previewGlow');
+      var previewContent  = $('previewContent');
 
       // Elementos do preview
-      var pHeader       = $('previewHeader');
-      var pLogo         = $('previewLogo');
-      var pLogoText     = $('previewLogoText');
-      var pLogoImg      = $('previewLogoImg');
-      var pStoreName    = $('previewStoreName');
-      var pStoreSub     = $('previewStoreSub');
-      var pCart         = $('previewCart');
-      var pCartIcon     = $('previewCartIcon');
-      var pCartText     = $('previewCartText');
-      var p1Emoji       = $('p1Emoji');
-      var p2Emoji       = $('p2Emoji');
-      var p3Emoji       = $('p3Emoji');
-      var p1Name        = $('p1Name');
-      var p2Name        = $('p2Name');
-      var p3Name        = $('p3Name');
-      var p1Price       = $('p1Price');
-      var p2Price       = $('p2Price');
-      var p3Price       = $('p3Price');
-      var p1Badge       = $('p1Badge');
-      var p2Badge       = $('p2Badge');
-      var p3Badge       = $('p3Badge');
-      var footerTabs    = document.querySelectorAll('.cadastro-preview-tab');
+      var pHeader         = $('previewHeader');
+      var pLogo           = $('previewLogo');
+      var pLogoText       = $('previewLogoText');
+      var pLogoImg        = $('previewLogoImg');
+      var pStoreName      = $('previewStoreName');
+      var pStoreSub       = $('previewStoreSub');
+      var pCart           = $('previewCart');
+      var pCartIcon       = $('previewCartIcon');
+      var pCartText       = $('previewCartText');
+      var p1Emoji         = $('p1Emoji');
+      var p2Emoji         = $('p2Emoji');
+      var p3Emoji         = $('p3Emoji');
+      var p1Name          = $('p1Name');
+      var p2Name          = $('p2Name');
+      var p3Name          = $('p3Name');
+      var p1Price         = $('p1Price');
+      var p2Price         = $('p2Price');
+      var p3Price         = $('p3Price');
+      var p1Badge         = $('p1Badge');
+      var p2Badge         = $('p2Badge');
+      var p3Badge         = $('p3Badge');
+      var pTabStore       = $('tabStore');
 
-      /* ─── Estado ─── */
+      /* ─── Estado Reativo ─── */
       var state = {
         nome: 'Minha Loja',
         cor: '#8e7cc3',
-        logoDataURL: null,
+        logoFile: null,
+        logoDataURL: null
       };
 
-      /* ─── Utilitário de cor ─── */
+      /* ─── Auxiliares de Cores para o Simulador ─── */
       function hexToRgba(hex, alpha) {
-        var r = parseInt(hex.slice(1,3), 16);
-        var g = parseInt(hex.slice(3,5), 16);
-        var b = parseInt(hex.slice(5,7), 16);
+        var cleanHex = hex.replace('#', '');
+        if (cleanHex.length === 3) {
+          cleanHex = cleanHex[0] + cleanHex[0] + cleanHex[1] + cleanHex[1] + cleanHex[2] + cleanHex[2];
+        }
+        var r = parseInt(cleanHex.substring(0, 2), 16);
+        var g = parseInt(cleanHex.substring(2, 4), 16);
+        var b = parseInt(cleanHex.substring(4, 6), 16);
         return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
       }
 
       function lighterBgFromHex(hex) {
-        return hexToRgba(hex, 0.05);
+        return hexToRgba(hex, 0.06);
       }
 
-      /* ─── Utilitários de cor aprimorados ─── */
-
-      /**
-       * Determina se uma cor HEX é visualmente clara (luminância > 0.55).
-       * Usado APENAS para decidir a cor do texto no ícone/logo,
-       * que usa a cor tema como fundo SÓLIDO.
-       */
-      function isLightColor(hex) {
-        var r = parseInt(hex.slice(1,3), 16);
-        var g = parseInt(hex.slice(3,5), 16);
-        var b = parseInt(hex.slice(5,7), 16);
-        var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return lum > 0.55;
-      }
-
-      /**
-       * Cor do texto DENTRO do logo/ícone (fundo = cor tema sólida).
-       * Se a cor tema é clara → texto escuro. Se escura → texto branco.
-       */
-      function logoTextColor(hex) {
-        return isLightColor(hex) ? '#0f172a' : '#ffffff';
-      }
-
-      /**
-       * Cor do texto no HEADER do preview (fundo = glassmorphism claro).
-       * O header usa fundo com 8-12% de opacidade + blur, resultando
-       * sempre num fundo claro. Portanto o texto DEVE ser sempre escuro
-       * para garantir contraste WCAG AA+.
-       */
-      function headerTextColor() {
-        return '#0f172a';
-      }
-
-      /**
-       * Fundo do header: leve tint da cor tema (sempre translúcido → claro).
-       * Usamos 12% em vez de 8% para um tint mais perceptível sem perder
-       * o efeito glassmorphism.
-       */
-      function headerBgFromHex(hex) {
+      function badgeBgFromHex(hex) {
         return hexToRgba(hex, 0.12);
       }
 
-      /**
-       * Badge tint — tom mais evidente para as tags dos produtos.
-       */
-      function badgeBgFromHex(hex) {
-        return hexToRgba(hex, 0.14);
-      }
-
-      /* ─── Atualizar Preview ─── */
+      /* ─── Atualização do Preview do Simulador ─── */
       function updatePreview() {
         var cor = state.cor;
 
-        // ── HEADER (glassmorphism claro) ──
-        // Fundo: leve tint da cor tema (sempre translúcido → claro)
-        pHeader.style.background = headerBgFromHex(cor);
-        // Texto: SEMPRE escuro por contraste (header é claro)
-        pHeader.style.color = headerTextColor();
+        // ── 1. CABEÇALHO (Ajuste de contraste matemático YIQ) ──
+        pHeader.style.background = cor;
+        
+        var contrastColor = getContrastColorYIQ(cor);
+        pHeader.style.color = contrastColor;
+        pStoreName.style.color = contrastColor;
+        pStoreSub.style.color = contrastColor;
+        pStoreSub.style.opacity = contrastColor === '#ffffff' ? '0.8' : '0.65';
 
-        // ── LOGO (fundo = cor tema sólida) ──
-        pLogo.style.background = cor;
-        pLogo.style.color = logoTextColor(cor);
+        // ── 2. NOME DA LOJA (Método Seguro .textContent contra XSS) ──
+        pStoreName.textContent = state.nome || 'Minha Loja';
 
-        // Logo real (upload) vs placeholder (emoji)
+        // ── 3. LOGO DA LOJA ──
+        // Se a cor do cabeçalho for branca (cor tema clara), o logo usa fundo cinza escuro para se destacar.
+        // Se a cor do cabeçalho for escura (cor tema escura), o logo usa fundo branco para contraste premium.
+        pLogo.style.background = contrastColor;
+        pLogo.style.color = cor;
+
         if (state.logoDataURL) {
           pLogoText.style.display = 'none';
           pLogoImg.style.display = 'block';
@@ -798,35 +895,25 @@
           pLogoImg.src = '';
         }
 
-        // ── NOME DA LOJA (sobre fundo claro → texto escuro) ──
-        pStoreName.textContent = state.nome || 'Minha Loja';
-        pStoreName.style.color = headerTextColor();
-        pStoreSub.style.color = headerTextColor();
-
-        // Carrinho
-        pCart.style.borderBottom = '1px solid ' + hexToRgba(cor, 0.10);
+        // ── 4. SACOLA / CARRINHO ──
+        pCart.style.borderBottom = '1px solid ' + hexToRgba(cor, 0.08);
         pCartIcon.style.color = cor;
 
-        // ── PRODUTOS ──
-        // Emoji bg: leve tint da cor tema
+        // ── 5. CARDS DE PRODUTOS SIMULADOS ──
         var productBg = lighterBgFromHex(cor);
         p1Emoji.style.background = productBg;
         p2Emoji.style.background = productBg;
         p3Emoji.style.background = productBg;
 
-        // Nome do produto: texto SEMPRE escuro (cards têm fundo claro)
-        var nameColor = '#0f172a';
-        p1Name.style.color = nameColor;
-        p2Name.style.color = nameColor;
-        p3Name.style.color = nameColor;
+        p1Name.style.color = '#0f172a';
+        p2Name.style.color = '#0f172a';
+        p3Name.style.color = '#0f172a';
 
-        // Preço: usa a COR TEMA para destacar (elemento de branding)
-        var priceColor = cor;
-        p1Price.style.color = priceColor;
-        p2Price.style.color = priceColor;
-        p3Price.style.color = priceColor;
+        p1Price.style.color = cor;
+        p2Price.style.color = cor;
+        p3Price.style.color = cor;
 
-        // Badges dos produtos com cor tema (fundo tint + texto na cor)
+        // Badges dos produtos
         var badgeBg = badgeBgFromHex(cor);
         p1Badge.style.background = badgeBg;
         p1Badge.style.color = cor;
@@ -835,48 +922,47 @@
         p3Badge.style.background = badgeBg;
         p3Badge.style.color = cor;
 
-        // Tab ativo (Início) — cor tema
-        footerTabs.forEach(function (tab, idx) {
-          if (idx === 0) {
-            tab.style.color = cor;
-          } else {
-            tab.style.color = '#999';
-          }
-        });
+        // Bottom Tab Ativa
+        if (pTabStore) {
+          pTabStore.style.color = cor;
+        }
 
-        // Glow de fundo
-        previewGlow.style.background = hexToRgba(cor, 0.10);
+        // Glow de fundo sob o mockup
+        previewGlow.style.background = hexToRgba(cor, 0.12);
 
         // Borda do mockup (desktop)
         var phone = $('cadastroPhone');
-        if (window.innerWidth >= 1024) {
+        if (window.innerWidth >= 1024 && phone) {
           phone.style.borderColor = '#1a1a2e';
-          phone.style.boxShadow =
-            '0 24px 80px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(255,255,255,0.06)';
+          phone.style.boxShadow = '0 24px 80px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(255,255,255,0.06)';
         }
       }
 
-      /* ─── Debounce para transição suave ─── */
-      var previewTimer = null;
+      /* ─── Agendador de Renderização Debounce de 150ms ─── */
+      var debouncedUpdatePreview = debounce(function () {
+        updatePreview();
+        previewContent.classList.remove('switching');
+      }, 150);
+
       function schedulePreview() {
-        if (previewTimer) clearTimeout(previewTimer);
         previewContent.classList.add('switching');
-        previewTimer = setTimeout(function () {
-          updatePreview();
-          previewContent.classList.remove('switching');
-        }, 100);
+        debouncedUpdatePreview();
       }
 
-      /* ─── Nome da Empresa ─── */
-      nomeInput.addEventListener('input', function () {
+      /* ─── Tratamento do Nome da Empresa ─── */
+      safeAddEventListener(nomeInput, 'input', function () {
         var val = this.value;
-        state.nome = val;
         charCount.textContent = val.length + ' / 40 caracteres';
+        state.nome = val;
         schedulePreview();
       });
 
-      /* ─── WhatsApp — Máscara simples ─── */
-      whatsInput.addEventListener('input', function () {
+      safeAddEventListener(nomeInput, 'focus', function () {
+        this.classList.remove('border-rose-300', 'bg-rose-50');
+      });
+
+      /* ─── Tratamento do WhatsApp (Máscara reativa) ─── */
+      safeAddEventListener(whatsInput, 'input', function () {
         var val = this.value.replace(/\D/g, '');
         if (val.length <= 2) {
           val = '(' + val;
@@ -888,110 +974,166 @@
         this.value = val;
       });
 
-      /* ─── Upload de Logo ─── */
-      logoDropzone.addEventListener('click', function (e) {
+      safeAddEventListener(whatsInput, 'focus', function () {
+        this.classList.remove('border-rose-300', 'bg-rose-50');
+      });
+
+      /* ─── Dropzone do Logotipo da Loja (Immune Drag & Drop com dragCounter) ─── */
+      var logoDragCounter = 0;
+
+      safeAddEventListener(logoDropzone, 'click', function (e) {
         if (e.target === logoRemove || logoRemove.contains(e.target)) return;
         logoInput.click();
       });
 
-      logoDropzone.addEventListener('dragover', function (e) {
+      safeAddEventListener(logoDropzone, 'dragenter', function (e) {
         e.preventDefault();
-        this.classList.add('dragover');
-      });
-      logoDropzone.addEventListener('dragleave', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-      });
-      logoDropzone.addEventListener('drop', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        var file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) handleLogoFile(file);
+        logoDragCounter++;
+        logoDropzone.classList.add('dragover');
       });
 
-      logoInput.addEventListener('change', function () {
+      safeAddEventListener(logoDropzone, 'dragleave', function (e) {
+        e.preventDefault();
+        logoDragCounter--;
+        if (logoDragCounter === 0) {
+          logoDropzone.classList.remove('dragover');
+        }
+      });
+
+      safeAddEventListener(logoDropzone, 'dragover', function (e) {
+        e.preventDefault();
+      });
+
+      safeAddEventListener(logoDropzone, 'drop', function (e) {
+        e.preventDefault();
+        logoDragCounter = 0;
+        logoDropzone.classList.remove('dragover');
+        var file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleLogoFile(file);
+        } else {
+          showToast('Formato de arquivo inválido. Selecione uma imagem (PNG ou JPG).', 'error');
+        }
+      });
+
+      safeAddEventListener(logoInput, 'change', function () {
         var file = this.files[0];
         if (file) handleLogoFile(file);
       });
 
       function handleLogoFile(file) {
         if (file.size > 2 * 1024 * 1024) {
-          alert('A imagem deve ter no máximo 2MB.');
+          showToast('O arquivo de imagem do logo deve ter no máximo 2MB.', 'error');
           return;
         }
+        
         var reader = new FileReader();
         reader.onload = function (e) {
+          state.logoFile = file;
           state.logoDataURL = e.target.result;
+          
           logoPreview.src = e.target.result;
+          logoPreview.style.display = 'block';
           logoPreview.classList.add('visible');
+          
           logoPlaceholder.style.display = 'none';
+          logoRemove.style.display = 'flex';
           logoRemove.classList.add('visible');
           logoDropzone.classList.add('has-logo');
+          
           schedulePreview();
+          showToast('Logo carregado com sucesso!', 'success');
+        };
+        reader.onerror = function () {
+          showToast('Erro ao ler arquivo do logotipo.', 'error');
         };
         reader.readAsDataURL(file);
       }
 
-      logoRemove.addEventListener('click', function (e) {
+      safeAddEventListener(logoRemove, 'click', function (e) {
         e.stopPropagation();
+        state.logoFile = null;
         state.logoDataURL = null;
+        
         logoPreview.src = '';
+        logoPreview.style.display = 'none';
         logoPreview.classList.remove('visible');
+        
         logoPlaceholder.style.display = 'flex';
+        logoRemove.style.display = 'none';
         logoRemove.classList.remove('visible');
         logoDropzone.classList.remove('has-logo');
+        
         logoInput.value = '';
         schedulePreview();
+        showToast('Logo removido.', 'success');
       });
 
-      /* ─── Swatches de Cor ─── */
+      /* ─── Swatches & Seletor de Cores ─── */
       colorSwatches.forEach(function (swatch) {
-        swatch.addEventListener('click', function () {
+        safeAddEventListener(swatch, 'click', function () {
           colorSwatches.forEach(function (s) { s.classList.remove('active'); });
           this.classList.add('active');
           state.cor = this.dataset.color;
+          customColor.value = this.dataset.color;
           schedulePreview();
         });
       });
 
-      customColor.addEventListener('input', function () {
+      safeAddEventListener(customColor, 'input', function () {
         colorSwatches.forEach(function (s) { s.classList.remove('active'); });
         state.cor = this.value;
         schedulePreview();
       });
 
-      /* ─── Upload de Planilha ─── */
-      var sheetData = null; // { filename, data, ... }
+      /* ─── Dropzone do Excel (Immune Drag & Drop com dragCounter) ─── */
+      var sheetData = null; // { file, filename, rowCount, ... }
 
-      var sheetDropzone = $('sheetDropzone');
-      var sheetInput = $('sheetInput');
-      var sheetPlaceholder = $('sheetPlaceholder');
-      var sheetFileInfo = $('sheetFileInfo');
-      var sheetFileName = $('sheetFileName');
+      var sheetDropzone     = $('sheetDropzone');
+      var sheetInput        = $('sheetInput');
+      var sheetPlaceholder  = $('sheetPlaceholder');
+      var sheetFileInfo     = $('sheetFileInfo');
+      var sheetFileName     = $('sheetFileName');
       var sheetProductCount = $('sheetProductCount');
-      var sheetRemove = $('sheetRemove');
+      var sheetRemove       = $('sheetRemove');
+      var sheetDragCounter  = 0;
 
-      sheetDropzone.addEventListener('click', function (e) {
+      safeAddEventListener(sheetDropzone, 'click', function (e) {
         if (e.target === sheetRemove || sheetRemove.contains(e.target)) return;
         sheetInput.click();
       });
 
-      sheetDropzone.addEventListener('dragover', function (e) {
+      safeAddEventListener(sheetDropzone, 'dragenter', function (e) {
         e.preventDefault();
-        this.classList.add('dragover');
-      });
-      sheetDropzone.addEventListener('dragleave', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-      });
-      sheetDropzone.addEventListener('drop', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        var file = e.dataTransfer.files[0];
-        if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) handleSheetFile(file);
+        sheetDragCounter++;
+        sheetDropzone.classList.add('dragover');
       });
 
-      sheetInput.addEventListener('change', function () {
+      safeAddEventListener(sheetDropzone, 'dragleave', function (e) {
+        e.preventDefault();
+        sheetDragCounter--;
+        if (sheetDragCounter === 0) {
+          sheetDropzone.classList.remove('dragover');
+        }
+      });
+
+      safeAddEventListener(sheetDropzone, 'dragover', function (e) {
+        e.preventDefault();
+      });
+
+      safeAddEventListener(sheetDropzone, 'drop', function (e) {
+        e.preventDefault();
+        sheetDragCounter = 0;
+        sheetDropzone.classList.remove('dragover');
+        var file = e.dataTransfer.files[0];
+        if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+          handleSheetFile(file);
+        } else {
+          showToast('Formato inválido. Arraste uma planilha de produtos (.xlsx ou .xls).', 'error');
+        }
+      });
+
+      safeAddEventListener(sheetInput, 'change', function () {
         var file = this.files[0];
         if (file) handleSheetFile(file);
       });
@@ -1002,17 +1144,26 @@
 
         sheetPlaceholder.style.display = 'none';
         sheetFileInfo.classList.remove('hidden');
-        sheetFileName.textContent = 'Enviando...';
+        sheetFileName.textContent = 'Carregando planilha...';
+        sheetProductCount.textContent = 'Validando dados no servidor...';
 
-        fetch((window.API_URL || '') + '/api/upload', { method: 'POST', body: formData })
+        fetchWithTimeout((window.API_URL || '') + '/api/upload', { 
+          method: 'POST', 
+          body: formData 
+        }, 10000) // Timeout de 10 segundos
           .then(function (r) {
-            if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || 'Erro ao processar'); });
+            if (!r.ok) {
+              return r.json().then(function (d) { 
+                throw new Error(d.error || 'Erro na resposta do servidor.'); 
+              }).catch(function (e) {
+                throw new Error(e.message || 'Falha ao processar arquivo no servidor.');
+              });
+            }
             return r.json();
           })
           .then(function (data) {
             sheetData = {
-                file: file,
-
+              file: file,
               filename: data.filename,
               sheets: data.sheets,
               activeSheet: data.activeSheet,
@@ -1024,15 +1175,20 @@
             sheetProductCount.textContent = data.rowCount + ' produto(s) detectado(s)';
             sheetRemove.style.display = 'flex';
             sheetDropzone.classList.add('has-logo');
+            showToast('Planilha importada e validada com sucesso!', 'success');
           })
           .catch(function (err) {
             sheetPlaceholder.style.display = 'flex';
             sheetFileInfo.classList.add('hidden');
-            alert('Erro ao processar planilha: ' + err.message);
+            sheetRemove.style.display = 'none';
+            sheetDropzone.classList.remove('has-logo');
+            sheetInput.value = '';
+            sheetData = null;
+            showToast('Erro ao ler planilha: ' + err.message, 'error');
           });
       }
 
-      sheetRemove.addEventListener('click', function (e) {
+      safeAddEventListener(sheetRemove, 'click', function (e) {
         e.stopPropagation();
         sheetData = null;
         sheetPlaceholder.style.display = 'flex';
@@ -1040,130 +1196,132 @@
         sheetRemove.style.display = 'none';
         sheetDropzone.classList.remove('has-logo');
         sheetInput.value = '';
+        showToast('Planilha removida.', 'success');
       });
 
-      /* ─── Submit do Form ─── */
-      form.addEventListener('submit', async function (e) {
-            e.preventDefault();
+      /* ─── Submit do Formulário (Integração Total Front-Back) ─── */
+      function resetSubmit() {
+        btnSubmit.disabled = false;
+        btnSubmit.classList.remove('loading');
+        btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
+      }
 
-            var nome = nomeInput.value.trim();
-            if (!nome) {
-              nomeInput.classList.add('error');
-              nomeInput.focus();
-              return;
-            }
-            nomeInput.classList.remove('error');
+      safeAddEventListener(form, 'submit', async function (e) {
+        e.preventDefault();
 
-            if (!sheetData) {
-              alert('Selecione uma planilha de produtos para continuar.');
-              return;
-            }
+        var nome = nomeInput.value.trim();
+        if (!nome) {
+          nomeInput.classList.add('border-rose-300', 'bg-rose-50');
+          nomeInput.focus();
+          showToast('O nome da empresa é obrigatório.', 'error');
+          return;
+        }
 
-            btnSubmit.disabled = true;
-            btnSubmit.classList.add('loading');
-            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando sua vitrine premium...';
+        var whatsapp = whatsInput.value.trim();
+        if (!whatsapp) {
+          whatsInput.classList.add('border-rose-300', 'bg-rose-50');
+          whatsInput.focus();
+          showToast('O WhatsApp é obrigatório para receber os pedidos.', 'error');
+          return;
+        }
 
-            // ---------- Etapa 1: criar catálogo (onboarding) ----------
-            var apiUrl = window.API_URL;
-            var formData = new FormData();
-            formData.append('nome_loja', state.nome);
-            formData.append('whatsapp', whatsInput.value);
-            formData.append('cor_tema', state.cor);
+        if (!sheetData || !sheetData.file) {
+          showToast('Por favor, faça upload de uma planilha de produtos para continuar.', 'error');
+          return;
+        }
 
-            // Se houver logo, converte dataURL para Blob e anexa
-            if (state.logoDataURL) {
-              const blob = dataURItoBlob(state.logoDataURL);
-              formData.append('logo', blob, 'logo.png');
-            }
+        // Bloqueia interface
+        btnSubmit.disabled = true;
+        btnSubmit.classList.add('loading');
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Criando sua vitrine premium...';
 
-            let onboardingRes;
-            try {
-              const resp = await fetch(apiUrl + '/api/onboarding', {
-                method: 'POST',
-                body: formData,
-              });
-              onboardingRes = await resp.json();
-            } catch (err) {
-              alert('Erro ao criar catálogo: ' + err.message);
-              resetSubmit();
-              return;
-            }
+        var apiUrl = window.API_URL || '';
+        
+        // ─── ETAPA 1: ONBOARDING (Geração do Catálogo) ───
+        var onboardingData = new FormData();
+        onboardingData.append('nome_loja', nome);
+        onboardingData.append('whatsapp', whatsapp);
+        onboardingData.append('cor_tema', state.cor);
+        
+        if (state.logoFile) {
+          onboardingData.append('logo', state.logoFile);
+        }
 
-            if (!onboardingRes.success) {
-              alert('Falha ao criar catálogo: ' + (onboardingRes.error || ''));
-              resetSubmit();
-              return;
-            }
+        var onboardingRes;
+        try {
+          var response = await fetchWithTimeout(apiUrl + '/api/onboarding', {
+            method: 'POST',
+            body: onboardingData
+          }, 10000); // 10s Timeout robusto
 
-            const catalogId = onboardingRes.catalogo.id; // UUID
-            const slug = onboardingRes.catalogo.slug; // já será a hash segura
+          if (!response.ok) {
+            var errBody = await response.json().catch(function () { return {}; });
+            throw new Error(errBody.error || 'Erro na resposta do onboarding.');
+          }
+          
+          onboardingRes = await response.json();
+        } catch (err) {
+          showToast('Erro no Onboarding: ' + err.message, 'error');
+          resetSubmit();
+          return;
+        }
 
-            // ---------- Etapa 2: upload da planilha ----------
-            var sheetForm = new FormData();
-            sheetForm.append('file', sheetData.file); // keep original File object (need to store it)
-            sheetForm.append('catalogId', catalogId);
+        if (!onboardingRes || !onboardingRes.success || !onboardingRes.catalogo) {
+          showToast('Falha no Onboarding: Dados de catálogo inválidos retornados pela API.', 'error');
+          resetSubmit();
+          return;
+        }
 
-            try {
-              const resp2 = await fetch(apiUrl + '/api/produtos/upload', {
-                method: 'POST',
-                body: sheetForm,
-              });
-              const sheetResult = await resp2.json();
-              if (!sheetResult.success) {
-                alert('Erro ao enviar planilha: ' + (sheetResult.error || ''));
-                resetSubmit();
-                return;
-              }
-            } catch (err) {
-              alert('Erro ao enviar planilha: ' + err.message);
-              resetSubmit();
-              return;
-            }
+        var catalogId = onboardingRes.catalogo.id;
+        var slug = onboardingRes.catalogo.slug;
 
-            // Redireciona para a URL pública segura
-            window.location.href = (process.env.BASE_URL || '') + '/c/' + slug;
-          });
+        // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL ───
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importando ' + sheetData.rowCount + ' produtos no banco...';
+        
+        var uploadData = new FormData();
+        uploadData.append('file', sheetData.file);
+        uploadData.append('catalogId', catalogId);
 
-          // Helper para converter dataURL -> Blob
-          function dataURItoBlob(dataURI) {
-            const byteString = atob(dataURI.split(',')[1]);
-            const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], { type: mimeString });
+        try {
+          var uploadResponse = await fetchWithTimeout(apiUrl + '/api/produtos/upload', {
+            method: 'POST',
+            body: uploadData
+          }, 10000); // 10s Timeout robusto
+
+          if (!uploadResponse.ok) {
+            var uploadErrBody = await uploadResponse.json().catch(function () { return {}; });
+            throw new Error(uploadErrBody.error || 'Erro na resposta do processamento de produtos.');
           }
 
-          function resetSubmit() {
-            btnSubmit.disabled = false;
-            btnSubmit.classList.remove('loading');
-            btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
+          var uploadRes = await uploadResponse.json();
+          if (!uploadRes.success) {
+            throw new Error(uploadRes.error || 'Falha ao salvar lista de produtos.');
           }
-        /* Legacy onboarding flow removed – new flow above handles onboarding and sheet upload */
-              window.location.href = '/preview.html';
-            }
-          })
-          .catch(function () {
-            // Fallback: preview local se API falhar
-            window.location.href = '/preview.html';
-          });
+        } catch (err) {
+          showToast('Erro no Upload dos Produtos: ' + err.message, 'error');
+          resetSubmit();
+          return;
+        }
+
+        // Redirecionamento instantâneo para a URL pública segura
+        showToast('Catálogo premium gerado com sucesso! Redirecionando...', 'success');
+        setTimeout(function () {
+          window.location.href = '/c/' + slug;
+        }, 800);
       });
 
-      /* ─── Limpar erro ao digitar ─── */
-      nomeInput.addEventListener('focus', function () { this.classList.remove('error'); });
-
-      /* ─── Inicializar Preview ─── */
+      /* ─── Inicialização da Página ─── */
       updatePreview();
 
-      /* ─── Re-aplica borda do mockup em resize ─── */
-      window.addEventListener('resize', function () {
+      // Ajuste responsivo para a borda do mockup
+      safeAddEventListener(window, 'resize', function () {
         var phone = $('cadastroPhone');
-        if (window.innerWidth >= 1024) {
+        if (window.innerWidth >= 1024 && phone) {
           phone.style.borderColor = '#1a1a2e';
-          phone.style.boxShadow =
-            '0 24px 80px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(255,255,255,0.06)';
+          phone.style.boxShadow = '0 24px 80px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(255,255,255,0.06)';
+        } else if (phone) {
+          phone.style.borderColor = 'transparent';
+          phone.style.boxShadow = '0 4px 24px rgba(0,0,0,0.10)';
         }
       });
 
@@ -1171,3 +1329,4 @@
   </script>
 </body>
 </html>
+
