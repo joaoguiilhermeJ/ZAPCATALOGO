@@ -1147,7 +1147,7 @@
         sheetFileName.textContent = 'Carregando planilha...';
         sheetProductCount.textContent = 'Validando dados no servidor...';
 
-        fetchWithTimeout((window.API_URL || '') + '/api/upload', { 
+        fetchWithTimeout((window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com') + '/api/upload', { 
           method: 'POST', 
           body: formData 
         }, 10000) // Timeout de 10 segundos
@@ -1235,7 +1235,7 @@
         btnSubmit.classList.add('loading');
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Criando sua vitrine premium...';
 
-        var apiUrl = window.API_URL || '';
+        var apiUrl = window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com';
         
         // ─── ETAPA 1: ONBOARDING (Geração do Catálogo) ───
         var onboardingData = new FormData();
