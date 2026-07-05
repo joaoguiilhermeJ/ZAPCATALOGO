@@ -521,10 +521,10 @@
 
             <!-- Botão Submit -->
             <div class="pt-4">
-              <button type="submit" id="btnSubmit" class="btn-cadastro">
-                <i class="fas fa-magic"></i>
-                <span>Concluir e Gerar Catálogo</span>
-              </button>
+                <button type="submit" id="btnSubmit" class="btn-cadastro">
+                  <i class="fas fa-magic"></i>
+                  <span>Concluir e Gerar Catálogo</span>
+                </button>
             </div>
 
           </form>
@@ -1203,11 +1203,14 @@
       function resetSubmit() {
         btnSubmit.disabled = false;
         btnSubmit.classList.remove('loading');
+        btnSubmit.removeAttribute('aria-busy');
         btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
       }
 
       safeAddEventListener(form, 'submit', async function (e) {
         e.preventDefault();
+        // Accessibilidade: marca o botão como ocupado para leitores de tela
+        try { btnSubmit.setAttribute('aria-busy', 'true'); } catch (err) {}
 
         var nome = nomeInput.value.trim();
         if (!nome) {
@@ -1230,10 +1233,10 @@
           return;
         }
 
-        // Bloqueia interface
+        // Bloqueia interface + feedback visual
         btnSubmit.disabled = true;
         btnSubmit.classList.add('loading');
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Criando sua vitrine premium...';
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando estoque e gerando catálogo...';
 
         var apiUrl = window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com';
         
@@ -1303,11 +1306,12 @@
           return;
         }
 
-        // Redirecionamento instantâneo para a URL pública segura
-        showToast('Catálogo premium gerado com sucesso! Redirecionando...', 'success');
+        // Limpa estado de loading e redireciona para o slug amigável
+        resetSubmit();
+        showToast('Catálogo gerado com sucesso! Redirecionando...', 'success');
         setTimeout(function () {
           window.location.href = '/c/' + slug;
-        }, 800);
+        }, 600);
       });
 
       /* ─── Inicialização da Página ─── */
