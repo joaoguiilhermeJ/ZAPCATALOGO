@@ -452,6 +452,9 @@
           return;
         }
 
+        console.log("URL:", window.location.pathname);
+        console.log("Hash:", hash);
+
         const response = await fetchWithTimeout(
           `${APP.apiBaseUrl}/loja/${hash}`,
           { method: 'GET' }
