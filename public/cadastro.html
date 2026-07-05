@@ -31,6 +31,13 @@
     }
   </script>
   <script src="js/api-config.js"></script>
+  <script>
+    // API_BASE_URL unificada: localhost em dev, Render em produção (ajuste conforme seu serviço)
+    window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000'
+      : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com');
+    console.log('API_BASE_URL=', window.API_BASE_URL);
+  </script>
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1238,7 +1245,8 @@
         btnSubmit.classList.add('loading');
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando estoque e gerando catálogo...';
 
-        var apiUrl = window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com';
+        // Em dev usamos caminhos relativos para aproveitar o dev-server (proxy /api -> backend)
+        var apiUrl = window.API_BASE_URL || window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com';
         
         // ─── ETAPA 1: ONBOARDING (Geração do Catálogo) ───
         var onboardingData = new FormData();

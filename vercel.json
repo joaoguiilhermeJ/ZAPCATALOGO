@@ -4,10 +4,6 @@
 		{
 			"source": "/c/:slug",
 			"destination": "/catalogo.html"
-		},
-		{
-			"source": "/c/:slug/",
-			"destination": "/catalogo.html"
 		}
 	]
 }
