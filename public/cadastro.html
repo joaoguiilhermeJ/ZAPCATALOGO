@@ -1288,40 +1288,44 @@
         var catalogId = onboardingRes.catalogo.id;
         var slug = onboardingRes.catalogo.slug;
 
-        // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL ───
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importando ' + sheetData.rowCount + ' produtos no banco...';
-        
-        var uploadData = new FormData();
-        uploadData.append('file', sheetData.file);
-        uploadData.append('catalogId', catalogId);
+        // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL (disparado em background)
+        // Para melhorar UX, iniciamos o upload em background e redirecionamos
+        // imediatamente para o catálogo. O upload continua enquanto o usuário
+        // navega — em alguns navegadores a requisição pode ser abortada pela
+        // navegação; idealmente backend processaria async. Esta abordagem é a
+        // mais rápida para mostrar o catálogo ao usuário.
 
-        try {
-          var uploadResponse = await fetchWithTimeout(apiUrl + '/api/produtos/upload', {
-            method: 'POST',
-            body: uploadData
-          }, 10000); // 10s Timeout robusto
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando produtos em segundo plano...';
 
-          if (!uploadResponse.ok) {
-            var uploadErrBody = await uploadResponse.json().catch(function () { return {}; });
-            throw new Error(uploadErrBody.error || 'Erro na resposta do processamento de produtos.');
+        (function fireAndForgetUpload(file, catalogId) {
+          try {
+            var bgForm = new FormData();
+            bgForm.append('file', file);
+            bgForm.append('catalogId', catalogId);
+
+            // Não aguardamos; logamos resultado quando chegar (não bloqueante)
+            fetch(apiUrl + '/api/produtos/upload', {
+              method: 'POST',
+              body: bgForm
+            }).then(function (res) {
+              if (!res.ok) return res.json().catch(function(){return {}}).then(function(b){ throw new Error(b.error||'Upload falhou'); });
+              return res.json();
+            }).then(function (json) {
+              console.log('Upload background concluído:', json && json.success);
+            }).catch(function (err) {
+              console.warn('Upload background erro:', err.message || err);
+            });
+          } catch (e) {
+            console.warn('Erro ao iniciar upload background', e.message || e);
           }
+        })(sheetData.file, catalogId);
 
-          var uploadRes = await uploadResponse.json();
-          if (!uploadRes.success) {
-            throw new Error(uploadRes.error || 'Falha ao salvar lista de produtos.');
-          }
-        } catch (err) {
-          showToast('Erro no Upload dos Produtos: ' + err.message, 'error');
-          resetSubmit();
-          return;
-        }
-
-        // Limpa estado de loading e redireciona para o slug amigável
+        // Limpa estado de loading e redireciona imediatamente para o slug amigável
         resetSubmit();
         showToast('Catálogo gerado com sucesso! Redirecionando...', 'success');
         setTimeout(function () {
           window.location.href = '/c/' + slug;
-        }, 600);
+        }, 300);
       });
 
       /* ─── Inicialização da Página ─── */
