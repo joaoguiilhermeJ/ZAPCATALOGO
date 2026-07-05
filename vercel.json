@@ -1,17 +1,13 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/c/:hash",
-      "destination": "/catalogo.html"
-    },
-    {
-      "source": "/c/:hash/",
-      "destination": "/catalogo.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ]
+"cleanUrls": true,
+"rewrites": [
+{
+"source": "/c/:slug",
+"destination": "/catalogo.html"
+},
+{
+"source": "/c/:slug/",
+"destination": "/catalogo.html"
+}
+]
 }
