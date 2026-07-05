@@ -37,6 +37,8 @@
       ? 'http://localhost:3000'
       : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com');
     console.log('API_BASE_URL=', window.API_BASE_URL);
+    // Compatibilidade com scripts que leem `window.API_URL`
+    if (!window.API_URL) window.API_URL = window.API_BASE_URL;
   </script>
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

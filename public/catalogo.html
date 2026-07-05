@@ -30,6 +30,9 @@
       ? 'http://localhost:3000'
       : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com'); // ajuste para sua URL do Render
     console.log('API_BASE_URL=', window.API_BASE_URL);
+      // Compatibilidade: alguns scripts (ex: catalogo.js) leem `window.API_URL`
+      // Garantir que ambos apontem para a mesma origem do backend
+      if (!window.API_URL) window.API_URL = window.API_BASE_URL;
   </script>
   <script src="js/catalogo.js" defer></script>
   
