@@ -1,8 +1,11 @@
 {
-"cleanUrls": true,
 "rewrites": [
 {
 "source": "/c/:slug",
+"destination": "/catalogo.html"
+},
+{
+"source": "/c/:slug/",
 "destination": "/catalogo.html"
 }
 ]
