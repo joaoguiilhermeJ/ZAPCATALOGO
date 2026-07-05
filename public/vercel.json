@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/c/:slug", "destination": "/c/catalogo.html" },
-    { "source": "/c/:slug/", "destination": "/c/catalogo.html" }
-  ]
-}

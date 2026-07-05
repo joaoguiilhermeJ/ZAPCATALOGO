@@ -3,11 +3,15 @@
   "rewrites": [
     {
       "source": "/c/:hash",
-      "destination": "/public/catalogo.html"
+      "destination": "/catalogo.html"
+    },
+    {
+      "source": "/c/:hash/",
+      "destination": "/catalogo.html"
     },
     {
       "source": "/(.*)",
-      "destination": "/public/$1"
+      "destination": "/$1"
     }
   ]
 }
