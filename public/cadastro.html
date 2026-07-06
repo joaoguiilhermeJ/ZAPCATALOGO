@@ -399,17 +399,17 @@
 
     <!-- Indicador de Passos (Desktop) -->
     <div class="cadastro-step justify-center mb-8 sm:mb-10">
-      <div class="cadastro-step-item active">
+      <div id="stepIndicator1" class="cadastro-step-item active">
         <span class="cadastro-step-number">1</span>
         <span>Configurar Loja</span>
       </div>
       <span class="cadastro-step-line"></span>
-      <div class="cadastro-step-item">
+      <div id="stepIndicator2" class="cadastro-step-item">
         <span class="cadastro-step-number">2</span>
-        <span>Enviar Produtos</span>
+        <span>Adicionar Imagens</span>
       </div>
       <span class="cadastro-step-line"></span>
-      <div class="cadastro-step-item">
+      <div id="stepIndicator3" class="cadastro-step-item">
         <span class="cadastro-step-number">3</span>
         <span>Publicar</span>
       </div>
@@ -423,7 +423,7 @@
         <div class="cadastro-glass rounded-3xl p-6 sm:p-8 lg:p-10">
 
           <!-- Cabeçalho do formulário -->
-          <div class="mb-8">
+          <div id="stepOneIntro" class="mb-8">
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurar sua loja</h1>
             <p class="text-sm text-slate-500 mt-2">Preencha os dados abaixo. Tudo é ao vivo — você vê o resultado na tela do celular ao lado.</p>
           </div>
@@ -532,7 +532,7 @@
             <div class="pt-4">
                 <button type="submit" id="btnSubmit" class="btn-cadastro">
                   <i class="fas fa-magic"></i>
-                  <span>Concluir e Gerar Catálogo</span>
+                  <span>Continuar para Imagens dos Produtos</span>
                 </button>
             </div>
 
@@ -547,7 +547,29 @@
               <p class="mt-2 text-sm text-slate-500">Esta etapa é opcional. Você pode publicar o catálogo quando terminar.</p>
             </div>
             <div id="importedProductsList" class="space-y-3"></div>
-            <a id="openCatalogButton" class="btn-cadastro mt-6 text-center" href="#">
+            <div class="mt-6 space-y-3">
+              <button id="continueToPublishButton" type="button" class="btn-cadastro">
+                <i class="fas fa-arrow-right"></i> <span>Continuar para publicar</span>
+              </button>
+              <button id="skipImagesButton" type="button" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
+                Pular por enquanto
+              </button>
+            </div>
+          </section>
+
+          <section id="publishStep" class="hidden text-center" aria-labelledby="publishTitle">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-600">
+              <i class="fas fa-check"></i>
+            </div>
+            <h2 id="publishTitle" class="mt-5 text-2xl font-extrabold text-slate-900">Seu catálogo está pronto</h2>
+            <p class="mt-2 text-sm text-slate-500">Compartilhe o link abaixo com seus clientes.</p>
+            <div class="mt-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <input id="catalogLinkInput" class="min-w-0 flex-1 bg-transparent px-2 text-sm text-slate-700 outline-none" type="text" readonly aria-label="Link do catálogo">
+              <button id="copyCatalogLinkButton" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                <i class="fas fa-copy mr-1"></i> Copiar
+              </button>
+            </div>
+            <a id="openCatalogButton" class="btn-cadastro mt-5 text-center" href="#">
               <i class="fas fa-external-link-alt"></i> <span>Abrir catálogo</span>
             </a>
           </section>
@@ -831,9 +853,16 @@
       var colorSwatches   = document.querySelectorAll('.color-swatch');
       var customColor     = $('customColor');
       var btnSubmit       = $('btnSubmit');
+      var stepOneIntro    = $('stepOneIntro');
       var productImagesStep = $('productImagesStep');
       var importedProductsList = $('importedProductsList');
+      var publishStep     = $('publishStep');
+      var continueToPublishButton = $('continueToPublishButton');
+      var skipImagesButton = $('skipImagesButton');
       var openCatalogButton = $('openCatalogButton');
+      var catalogLinkInput = $('catalogLinkInput');
+      var copyCatalogLinkButton = $('copyCatalogLinkButton');
+      var stepIndicators = [$('stepIndicator1'), $('stepIndicator2'), $('stepIndicator3')];
       var previewGlow     = $('previewGlow');
       var previewContent  = $('previewContent');
 
@@ -1230,11 +1259,43 @@
         btnSubmit.disabled = false;
         btnSubmit.classList.remove('loading');
         btnSubmit.removeAttribute('aria-busy');
-        btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
+        btnSubmit.innerHTML = '<i class="fas fa-arrow-right"></i> <span>Continuar para Imagens dos Produtos</span>';
+      }
+
+      function setOnboardingStep(step) {
+        stepIndicators.forEach(function (indicator, index) {
+          indicator.classList.toggle('active', index === step - 1);
+        });
+        form.classList.toggle('hidden', step !== 1);
+        stepOneIntro.classList.toggle('hidden', step !== 1);
+        productImagesStep.classList.toggle('hidden', step !== 2);
+        publishStep.classList.toggle('hidden', step !== 3);
+
+        var target = step === 1 ? form : (step === 2 ? productImagesStep : publishStep);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function formatProductPrice(value) {
+        if (value === null || value === undefined || value === '') return 'Preço não informado';
+        var parsed = Number(String(value).replace(/[^\d,.-]/g, '').replace(',', '.'));
+        if (!Number.isFinite(parsed)) return String(value);
+        return parsed.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      function goToPublishStep() {
+        setOnboardingStep(3);
       }
 
       function renderImportedProducts(produtos, apiUrl) {
         importedProductsList.replaceChildren();
+
+        if (!produtos.length) {
+          var emptyMessage = document.createElement('p');
+          emptyMessage.className = 'rounded-xl bg-amber-50 p-4 text-sm text-amber-800';
+          emptyMessage.textContent = 'Nenhum produto foi retornado pela importação. Você ainda pode publicar o catálogo e adicionar imagens depois.';
+          importedProductsList.appendChild(emptyMessage);
+          return;
+        }
 
         produtos.forEach(function (produto) {
           var row = document.createElement('article');
@@ -1242,26 +1303,45 @@
 
           var preview = document.createElement('div');
           preview.className = 'flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-300';
-          preview.innerHTML = '<i class="fas fa-image text-2xl" aria-hidden="true"></i>';
+          if (produto.imagem_url) {
+            var currentImage = document.createElement('img');
+            currentImage.src = produto.imagem_url;
+            currentImage.alt = 'Imagem de ' + (produto.nome || 'produto');
+            currentImage.className = 'h-full w-full object-cover';
+            currentImage.addEventListener('error', function () {
+              preview.innerHTML = '<i class="fas fa-image text-2xl" aria-hidden="true"></i>';
+            }, { once: true });
+            preview.appendChild(currentImage);
+          } else {
+            preview.innerHTML = '<i class="fas fa-image text-2xl" aria-hidden="true"></i>';
+          }
 
           var info = document.createElement('div');
           info.className = 'min-w-0 flex-1';
           var name = document.createElement('p');
           name.className = 'truncate text-sm font-bold text-slate-800';
           name.textContent = produto.nome || 'Produto';
+          var details = document.createElement('p');
+          details.className = 'mt-1 text-xs text-slate-500';
+          details.textContent = formatProductPrice(produto.preco) + ' · ' + (produto.categoria || 'Sem categoria');
           var status = document.createElement('p');
           status.className = 'mt-1 text-xs text-slate-400';
-          status.textContent = 'Sem imagem';
+          status.textContent = produto.imagem_url ? 'Imagem adicionada' : 'Sem imagem';
 
           var input = document.createElement('input');
           input.type = 'file';
-          input.accept = 'image/jpeg,image/png,image/webp';
+          input.accept = 'image/*';
           input.className = 'hidden';
 
           var button = document.createElement('button');
           button.type = 'button';
           button.className = 'mt-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60';
-          button.textContent = 'Adicionar imagem';
+          button.textContent = produto.imagem_url ? 'Trocar imagem' : 'Adicionar imagem';
+          if (!produto.id) {
+            button.disabled = true;
+            button.textContent = 'Produto sem ID';
+            status.textContent = 'Não foi possível habilitar o upload';
+          }
           button.addEventListener('click', function () { input.click(); });
           input.addEventListener('change', async function () {
             var file = input.files[0];
@@ -1301,11 +1381,25 @@
             }
           });
 
-          info.append(name, status, input, button);
+          info.append(name, details, status, input, button);
           row.append(preview, info);
           importedProductsList.appendChild(row);
         });
       }
+
+      safeAddEventListener(continueToPublishButton, 'click', goToPublishStep);
+      safeAddEventListener(skipImagesButton, 'click', goToPublishStep);
+      safeAddEventListener(copyCatalogLinkButton, 'click', async function () {
+        var link = catalogLinkInput.value;
+        try {
+          await navigator.clipboard.writeText(link);
+        } catch (err) {
+          catalogLinkInput.focus();
+          catalogLinkInput.select();
+          document.execCommand('copy');
+        }
+        showToast('Link do catálogo copiado!', 'success');
+      });
 
       safeAddEventListener(form, 'submit', async function (e) {
         e.preventDefault();
@@ -1393,10 +1487,11 @@
           if (!productsResponse.ok) throw new Error(productsBody.error || 'Falha ao importar produtos.');
 
           renderImportedProducts(productsBody.produtos || [], apiUrl);
-          openCatalogButton.href = '/c/' + encodeURIComponent(slug);
-          form.classList.add('hidden');
-          productImagesStep.classList.remove('hidden');
-          productImagesStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          var catalogPath = '/c/' + encodeURIComponent(slug);
+          var catalogUrl = new URL(catalogPath, window.location.origin).href;
+          openCatalogButton.href = catalogPath;
+          catalogLinkInput.value = catalogUrl;
+          setOnboardingStep(2);
           showToast('Produtos importados. Agora você pode adicionar as imagens.', 'success');
         } catch (err) {
           showToast('Erro ao importar produtos: ' + err.message, 'error');
