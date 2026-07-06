@@ -1,45 +1,658 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Catálogo de produtos ZapCatálogo">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <meta name="description" content="Catálogo de produtos ZapCatálogo" />
   <title>Catálogo de Produtos — ZapCatálogo</title>
 
   <!-- ═══ TAILWIND CSS (build) — use built CSS in production, not CDN ═══ -->
-  <link rel="stylesheet" href="/css/tailwind.build.css">
-  <!-- Custom overrides -->
-  <link rel="stylesheet" href="/css/style.css">
-  
+  <link rel="stylesheet" href="/css/tailwind.build.css" />
+  <!-- Custom overrides (serão complementados inline) -->
+
   <!-- ═══ FONT AWESOME (Icons) ═══ -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <!-- ═══ PLUS JAKARTA SANS (Typography) ═══ -->
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
     * {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-
     html {
       scroll-behavior: smooth;
     }
+    body {
+      background: #f8f9fe;
+      color: #1a1a2e;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ============================================================
+       VARIÁVEIS (cores)
+       ============================================================ */
+    :root {
+      --primary: #6C5CE7;
+      --primary-light: #A29BFE;
+      --primary-dark: #4834D4;
+      --surface: #F8F9FE;
+      --text-primary: #1A1A2E;
+      --text-secondary: #4A4A6A;
+    }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    #toastContainer {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1rem;
+      right: 1rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      pointer-events: none;
+    }
+    #toastContainer > div {
+      pointer-events: auto;
+      backdrop-filter: blur(8px);
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideUp 0.3s ease forwards;
+    }
+    #toastContainer > div.hide {
+      animation: slideDown 0.3s ease forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(20px); }
+    }
+
+    /* ============================================================
+       HERO
+       ============================================================ */
+    #heroSection {
+      border-radius: 0 0 2rem 2rem !important;
+      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.2) !important;
+    }
+    #heroSection .hero-content {
+      padding: 1.5rem 1.25rem;
+    }
+    #heroLogo {
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    #heroStoreName {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    #heroCTAWhatsApp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #10b981;
+      color: white;
+      border-radius: 2rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 280px;
+      text-decoration: none;
+    }
+    #heroCTAWhatsApp:active {
+      transform: scale(0.96);
+    }
+
+    /* ============================================================
+       SEARCH
+       ============================================================ */
+    #searchInput {
+      height: 54px;
+      font-size: 1rem;
+      padding-left: 3rem;
+      padding-right: 1rem;
+      border-radius: 2rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      transition: all 0.2s;
+      width: 100%;
+      outline: none;
+    }
+    #searchInput:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.15);
+    }
+    #searchInput + .search-icon {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+    #searchClear {
+      position: absolute;
+      right: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.25rem;
+      display: none;
+    }
+    #searchClear:hover { color: #475569; }
+
+    /* ============================================================
+       FILTERS
+       ============================================================ */
+    .category-filter {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 2rem;
+      white-space: nowrap;
+      background: white;
+      border: 1px solid #e2e8f0;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .category-filter.active {
+      background: var(--primary) !important;
+      color: white !important;
+      border-color: var(--primary);
+    }
+    .category-filter:active {
+      transform: scale(0.94);
+    }
+
+    #sortSelect {
+      height: 44px;
+      background: white;
+      border-radius: 2rem;
+      border: 1px solid #e2e8f0;
+      padding: 0 1.2rem 0 1.2rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    #sortSelect:focus {
+      border-color: var(--primary);
+    }
+
+    #priceRange {
+      height: 6px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    #priceValue {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.9rem;
+    }
+
+    /* ============================================================
+       PRODUCT CARDS
+       ============================================================ */
+    .product-card {
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card:active {
+      transform: scale(0.98);
+    }
+    .product-card .product-image {
+      height: 140px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #94a3b8;
+    }
+    .product-card .product-body {
+      padding: 0.75rem 0.75rem 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .product-card .product-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: var(--text-primary);
+    }
+    .product-card .product-description {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-card .product-category {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.7rem;
+      border-radius: 1rem;
+      background: rgba(108,92,231,0.1);
+      color: var(--primary);
+      align-self: flex-start;
+    }
+    .product-card .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.25rem;
+    }
+    .product-card .product-price {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .product-card .btn-add-cart {
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .product-card .btn-add-cart:active {
+      transform: scale(0.9);
+    }
+    .product-card .btn-buy {
+      width: 100%;
+      padding: 0.6rem 0;
+      border-radius: 2rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      margin-top: 0.3rem;
+    }
+    .product-card .btn-buy:active {
+      transform: scale(0.96);
+    }
+
+    /* ============================================================
+       CART DRAWER (mobile fullscreen)
+       ============================================================ */
+    #cartDrawer .drawer-panel {
+      width: 100% !important;
+      max-width: 100% !important;
+      border-radius: 0 !important;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: white;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    #cartDrawer .drawer-panel.open {
+      transform: translateY(0);
+    }
+    #cartDrawer .drawer-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #cartDrawer .drawer-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #cartDrawer .drawer-header h2 i {
+      color: var(--primary);
+    }
+    #cartDrawer .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+    }
+    #cartDrawer .drawer-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #f1f5f9;
+      background: white;
+    }
+    #cartDrawer .drawer-footer .subtotal {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+    #cartDrawer .drawer-footer .subtotal span:last-child {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    #cartDrawer .drawer-footer button {
+      width: 100%;
+      padding: 0.8rem 0;
+      border-radius: 2rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #cartDrawer .drawer-footer button:active {
+      transform: scale(0.96);
+    }
+    #cartDrawer .drawer-footer .btn-continue {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    #cartDrawer .drawer-footer .btn-whatsapp {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+    }
+    /* Cart item */
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .cart-item .item-info .name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cart-item .item-info .price {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .cart-item .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cart-item .item-actions button {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: #f1f5f9;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .cart-item .item-actions button:active {
+      transform: scale(0.9);
+    }
+    .cart-item .item-actions .qty {
+      font-weight: 700;
+      min-width: 1.5rem;
+      text-align: center;
+    }
+    .cart-item .item-actions .remove {
+      background: transparent;
+      color: #ef4444;
+    }
+
+    /* ============================================================
+       LOADING & ERROR
+       ============================================================ */
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 1.5rem;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ============================================================
+       RESPONSIVIDADE
+       ============================================================ */
+    @media (min-width: 640px) {
+      #heroSection .hero-content {
+        padding: 2rem 2rem;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #heroLogo {
+        width: 5rem;
+        height: 5rem;
+        font-size: 3rem;
+      }
+      #heroStoreName {
+        font-size: 2rem;
+      }
+      #heroCTAWhatsApp {
+        width: auto;
+        max-width: none;
+        padding: 0.75rem 2rem;
+      }
+      .product-card .product-image {
+        height: 160px;
+      }
+      #cartDrawer .drawer-panel {
+        width: 380px !important;
+        max-width: 380px !important;
+        border-radius: 1.5rem 0 0 1.5rem !important;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        left: auto;
+        transform: translateX(100%);
+        height: 100%;
+      }
+      #cartDrawer .drawer-panel.open {
+        transform: translateX(0);
+      }
+      #toastContainer {
+        left: auto;
+        right: 1.5rem;
+        bottom: 2rem;
+        max-width: 380px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .product-card .product-image {
+        height: 120px;
+        font-size: 2.5rem;
+      }
+      .product-card .product-title {
+        font-size: 0.85rem;
+      }
+      .product-card .product-price {
+        font-size: 1rem;
+      }
+      .product-card .btn-buy {
+        font-size: 0.8rem;
+        padding: 0.5rem 0;
+      }
+      #heroStoreName {
+        font-size: 1.25rem;
+      }
+    }
+
+    /* ============================================================
+       UTILITÁRIOS
+       ============================================================ */
+    .container {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    @media (min-width: 640px) {
+      .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+    .hidden {
+      display: none !important;
+    }
+    .text-center { text-align: center; }
+    .py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+    .space-y-8 > * + * { margin-top: 2rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .flex-1 { flex: 1; }
+    .shrink-0 { flex-shrink: 0; }
+    .w-full { width: 100%; }
+    .max-w-2xl { max-width: 42rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .overflow-x-auto { overflow-x: auto; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .top-full { top: 100%; }
+    .left-0 { left: 0; }
+    .right-0 { right: 0; }
+    .z-10 { z-index: 10; }
+    .z-50 { z-index: 50; }
+    .bg-black\/50 { background: rgba(0,0,0,0.5); }
+    .backdrop-blur-sm { backdrop-filter: blur(4px); }
+    .bg-white { background: white; }
+    .shadow-lg { box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    .shadow-xl { box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+    .border { border: 1px solid #e2e8f0; }
+    .border-t { border-top: 1px solid #e2e8f0; }
+    .rounded-2xl { border-radius: 1.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .overflow-hidden { overflow: hidden; }
+    .transition-smooth { transition: all 0.2s ease; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    @media (min-width: 640px) {
+      .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 768px) {
+      .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .gap-3 { gap: 0.75rem; }
+    @media (min-width: 640px) {
+      .gap-6 { gap: 1.5rem; }
+    }
   </style>
+
   <!-- ═══ JAVASCRIPT ═══ -->
   <script>
-    // Define API_BASE_URL de forma explícita para evitar desalinhamentos em produção
     window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000'
-      : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com'); // ajuste para sua URL do Render
-    console.log('API_BASE_URL=', window.API_BASE_URL);
-      // Compatibilidade: alguns scripts (ex: catalogo.js) leem `window.API_URL`
-      // Garantir que ambos apontem para a mesma origem do backend
-      if (!window.API_URL) window.API_URL = window.API_BASE_URL;
+      : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com');
+    if (!window.API_URL) window.API_URL = window.API_BASE_URL;
   </script>
   <script src="/js/catalogo.js" defer></script>
-  
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+</head>
+
+<body>
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div id="toastContainer"></div>
+
+  <!-- ===== MAIN ===== -->
+  <main class="container py-4 space-y-6">
+
+    <!-- LOADING STATE -->
+    <div id="loadingState" class="py-20 text-center">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <div class="skeleton h-64 rounded-2xl"></div>
         <div class="skeleton h-64 rounded-2xl"></div>
         <div class="skeleton h-64 rounded-2xl"></div>
@@ -61,93 +674,73 @@
     <!-- CONTENT STATE -->
     <div id="contentState" class="hidden space-y-8">
 
-      <!-- ═══ HERO SECTION ═══ -->
-      <div id="heroSection" class="rounded-3xl overflow-hidden shadow-lg transition-smooth" style="background: linear-gradient(135deg, #8e7cc3 0%, #5a4a78 100%);">
-        <div class="px-6 sm:px-8 py-12 sm:py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <!-- Left: Logo + Info -->
-          <div class="flex flex-col items-center sm:items-start gap-4 flex-1">
-            <div id="heroLogo" class="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl bg-white bg-opacity-20 transition-smooth">
+      <!-- ===== HERO SECTION ===== -->
+      <div id="heroSection" style="background: linear-gradient(135deg, #6C5CE7 0%, #4834D4 100%);">
+        <div class="hero-content flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex flex-col items-center sm:items-start gap-2">
+            <div id="heroLogo">
               <span id="heroLogoEmoji">🏪</span>
-              <img id="heroLogoImg" src="" alt="Logo" class="w-full h-full object-cover rounded-2xl hidden">
+              <img id="heroLogoImg" src="" alt="Logo" class="w-full h-full object-cover rounded-2xl hidden" />
             </div>
-            <div class="text-center sm:text-left">
-              <h2 id="heroStoreName" class="text-2xl sm:text-3xl font-extrabold text-white mb-2">Minha Loja</h2>
-              <p class="text-white text-opacity-80 text-sm flex items-center justify-center sm:justify-start gap-1.5">
-                <i class="fas fa-location-dot"></i> Catálogo Digital
-              </p>
-            </div>
+            <h2 id="heroStoreName" class="text-2xl font-extrabold text-white text-center sm:text-left">Minha Loja</h2>
+            <p class="text-white/80 text-sm flex items-center gap-1.5">
+              <i class="fas fa-store-alt"></i> Catálogo Digital
+            </p>
           </div>
-          <!-- Right: CTA -->
-          <div class="flex flex-col items-center gap-3">
-            <p class="text-white text-opacity-80 text-sm font-semibold">Fale conosco pelo WhatsApp</p>
-            <a id="heroCTAWhatsApp" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-emerald-600 rounded-full font-bold hover:shadow-lg hover:scale-105 transition-smooth btn-ripple">
-              <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+          <div class="flex flex-col items-center gap-1.5 w-full sm:w-auto">
+            <span class="text-white/80 text-xs font-medium">Atendimento via WhatsApp</span>
+            <a id="heroCTAWhatsApp" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-full font-bold text-sm shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-95 transition-all w-full sm:w-auto">
+              <i class="fab fa-whatsapp text-lg"></i> Falar com a loja
             </a>
           </div>
         </div>
       </div>
 
-      <!-- ═══ SEARCH BAR ═══ -->
-      <div class="relative">
+      <!-- ===== SEARCH ===== -->
+      <div class="relative max-w-2xl mx-auto">
         <div class="relative">
-          <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-          <input 
-            id="searchInput" 
-            type="text" 
-            placeholder="Buscar produtos..." 
-            class="w-full pl-12 pr-4 py-3 rounded-full border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-smooth"
-          >
-          <button id="searchClear" class="hidden absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-smooth" aria-label="Limpar busca">
-            <i class="fas fa-times"></i>
-          </button>
+          <i class="fas fa-search search-icon"></i>
+          <input id="searchInput" type="text" placeholder="Buscar produtos..." />
+          <button id="searchClear" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
         </div>
-        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-slate-200 max-h-64 overflow-y-auto z-10">
-        </div>
+        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-slate-200 max-h-64 overflow-y-auto z-10"></div>
       </div>
 
-      <!-- ═══ FILTROS ═══ -->
-      <div class="space-y-4">
-        <!-- Categorias (Horizontal Scroll) -->
-        <div class="flex items-center gap-2 mb-4 flex-wrap">
+      <!-- ===== FILTERS ===== -->
+      <div class="space-y-3">
+        <!-- Categorias -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1">
           <span class="text-sm font-semibold text-slate-600 shrink-0">Categoria:</span>
-          <div id="categoryFilters" class="flex gap-2 overflow-x-auto pb-2 flex-1">
-            <button class="category-filter active px-4 py-2 rounded-full text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-smooth shrink-0" data-category="all">
-              Todos
-            </button>
+          <div id="categoryFilters" class="flex gap-2">
+            <button class="category-filter active" data-category="todos">Todos</button>
           </div>
         </div>
 
         <!-- Ordenação e Preço -->
-        <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-sm font-semibold text-slate-600">Ordenar por:</span>
-          <select id="sortSelect" class="px-4 py-2 rounded-full border border-slate-200 focus:border-blue-500 outline-none transition-smooth text-sm">
-            <option value="relevance">Relevância</option>
-            <option value="price-low">Menor Preço</option>
-            <option value="price-high">Maior Preço</option>
-            <option value="newest">Mais Novos</option>
-          </select>
-
-          <div class="flex items-center gap-2">
-            <label for="priceRange" class="text-sm font-semibold text-slate-600">Preço máx:</label>
-            <input 
-              id="priceRange" 
-              type="range" 
-              min="0" 
-              max="10000" 
-              step="50" 
-              value="10000"
-              class="w-32"
-            >
-            <span id="priceValue" class="text-sm font-bold text-slate-900">R$ 10.000</span>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <span class="text-sm font-semibold text-slate-600 shrink-0">Ordenar:</span>
+            <select id="sortSelect" class="flex-1 sm:flex-initial px-4 py-2 rounded-full border border-slate-200 focus:border-[#6C5CE7] outline-none transition text-sm bg-white">
+              <option value="relevance">Relevância</option>
+              <option value="price-low">Menor Preço</option>
+              <option value="price-high">Maior Preço</option>
+              <option value="newest">Mais Novos</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <label for="priceRange" class="text-sm font-semibold text-slate-600 shrink-0">Preço máx:</label>
+            <input id="priceRange" type="range" min="0" max="10000" step="50" value="10000" class="flex-1 sm:w-32 accent-[#6C5CE7]" />
+            <span id="priceValue" class="text-sm font-bold text-[#6C5CE7]">R$ 10.000</span>
           </div>
         </div>
       </div>
 
-      <!-- ═══ GRID DE PRODUTOS ═══ -->
-      <div id="productsContainer" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- ===== PRODUCTS GRID ===== -->
+      <div id="productsContainer" class="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <!-- Produtos serão injetados via JS -->
       </div>
 
-      <!-- NO RESULTS STATE -->
+      <!-- NO RESULTS -->
       <div id="noResultsState" class="hidden text-center py-20">
         <div class="mb-6">
           <i class="fas fa-inbox text-6xl text-slate-300"></i>
@@ -157,57 +750,41 @@
       </div>
 
     </div>
-
   </main>
 
-  <!-- ═══ FLOATING CART DRAWER ═══ -->
+  <!-- ===== CART DRAWER ===== -->
   <div id="cartDrawer" class="hidden fixed inset-0 z-50">
-    <!-- Backdrop -->
-    <div id="cartBackdrop" class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-smooth"></div>
-
-    <!-- Drawer Content -->
-    <div class="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl flex flex-col transform transition-smooth duration-300">
+    <div id="cartBackdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="drawer-panel">
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-slate-200">
-        <h2 class="text-xl font-bold text-slate-900">Sua Sacola</h2>
-        <button id="closeCartDrawer" class="text-slate-400 hover:text-slate-600 transition-smooth" aria-label="Fechar carrinho">
-          <i class="fas fa-times text-xl"></i>
-        </button>
+      <div class="drawer-header">
+        <h2><i class="fas fa-shopping-bag"></i> Sacola <span id="cartBadgeCount" class="bg-[#6C5CE7]/10 text-[#6C5CE7] text-xs font-bold px-2 py-0.5 rounded-full">0</span></h2>
+        <button id="closeCartDrawer" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fas fa-times"></i></button>
       </div>
 
-      <!-- Items Container -->
-      <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+      <!-- Body -->
+      <div class="drawer-body" id="cartItemsContainer">
+        <!-- Itens serão injetados -->
       </div>
-
-      <!-- Empty Cart Message -->
       <div id="emptyCartMessage" class="hidden flex-1 flex items-center justify-center text-center px-6">
         <div>
           <i class="fas fa-shopping-bag text-5xl text-slate-300 mb-4 block"></i>
           <p class="text-slate-500 font-semibold">Sua sacola está vazia</p>
-          <p class="text-xs text-slate-400 mt-2">Adicione produtos para começar a comprar</p>
+          <p class="text-xs text-slate-400 mt-2">Adicione produtos</p>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="border-t border-slate-200 p-6 space-y-4">
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span class="text-slate-600">Subtotal:</span>
-            <span id="cartSubtotal" class="font-bold text-slate-900">R$ 0,00</span>
-          </div>
+      <div class="drawer-footer">
+        <div class="subtotal">
+          <span>Subtotal:</span>
+          <span id="cartSubtotal">R$ 0,00</span>
         </div>
-
-        <div class="flex items-center gap-3">
-          <button id="continuShoppingBtn" class="flex-1 px-4 py-3 rounded-full bg-slate-50 border border-slate-200 font-semibold">Continuar comprando</button>
-          <button id="confirmOrderBtn" class="flex-1 px-4 py-3 rounded-full bg-emerald-600 text-white font-bold">Enviar pedido (WhatsApp)</button>
-        </div>
+        <button class="btn-continue" id="continuShoppingBtn">Continuar comprando</button>
+        <button class="btn-whatsapp" id="confirmOrderBtn"><i class="fab fa-whatsapp"></i> Enviar pedido (WhatsApp)</button>
       </div>
-
     </div>
-
-  </main>
-
-  <!-- Toast container is defined once at the top -->
+  </div>
 
 </body>
 </html>
