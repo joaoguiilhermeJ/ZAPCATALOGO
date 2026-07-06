@@ -7,22 +7,9 @@ const APP = {
   // URL da API (ajuste conforme seu backend)
   apiBaseUrl: (() => {
     const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1") return "/api";
+    if (host === 'localhost' || host === '127.0.0.1') return '/api';
     // Em produção, use a URL do backend
-    // Prefer `API_BASE_URL` (definido em algumas páginas), depois `API_URL`.
-    const configured = window.API_BASE_URL || window.API_URL;
-    if (configured) {
-      try {
-        // Remove possível barra final
-        let base = configured.replace(/\/$/, "");
-        // Se já terminar em /api, retorna como está
-        if (base.endsWith("/api")) return base;
-        return base + "/api";
-      } catch (e) {
-        return configured;
-      }
-    }
-    return "https://seu-backend.com/api";
+    return window.API_URL || 'https://seu-backend.com/api';
   })(),
 
   catalog: null,
@@ -30,26 +17,26 @@ const APP = {
   filteredProducts: [],
   cart: [],
   currentFilters: {
-    category: "todos",
-    search: "",
-    sortBy: "relevance",
+    category: 'todos',
+    search: '',
+    sortBy: 'relevance',
     maxPrice: 10000,
   },
-  themeColor: "#6C5CE7",
+  themeColor: '#6C5CE7',
 };
 
 // ===== UTILITÁRIOS =====
 function escapeHTML(text) {
-  if (!text) return "";
-  const div = document.createElement("div");
+  if (!text) return '';
+  const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
 function formatPrice(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
     minimumFractionDigits: 2,
   }).format(value);
 }
@@ -58,17 +45,17 @@ function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
-    : "108, 92, 231";
+    : '108, 92, 231';
 }
 
 function shadeColor(color, percent) {
-  const num = parseInt(color.replace("#", ""), 16);
+  const num = parseInt(color.replace('#', ''), 16);
   const amt = Math.round(2.55 * percent);
   const R = (num >> 16) + amt;
   const G = ((num >> 8) & 0x00ff) + amt;
   const B = (num & 0x0000ff) + amt;
   return (
-    "#" +
+    '#' +
     (
       0x1000000 +
       (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
@@ -81,17 +68,17 @@ function shadeColor(color, percent) {
 }
 
 // ===== TOAST =====
-function showToast(message, type = "info") {
-  const container = document.getElementById("toastContainer");
-  const isSuccess = type === "success";
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const isSuccess = type === 'success';
   const bgClass = isSuccess
-    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-    : "bg-blue-50 border-blue-200 text-blue-800";
+    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+    : 'bg-blue-50 border-blue-200 text-blue-800';
   const iconClass = isSuccess
-    ? "fa-circle-check text-emerald-500"
-    : "fa-info-circle text-blue-500";
+    ? 'fa-circle-check text-emerald-500'
+    : 'fa-info-circle text-blue-500';
 
-  const toast = document.createElement("div");
+  const toast = document.createElement('div');
   toast.className = `flex items-center gap-3 p-4 rounded-xl border shadow-lg transition-all ${bgClass}`;
   toast.innerHTML = `
     <i class="fas ${iconClass} text-lg shrink-0"></i>
@@ -100,71 +87,68 @@ function showToast(message, type = "info") {
   `;
   container.appendChild(toast);
 
-  const closeBtn = toast.querySelector("button");
+  const closeBtn = toast.querySelector('button');
   const dismiss = () => {
-    toast.classList.add("opacity-0", "translate-x-96");
+    toast.classList.add('opacity-0', 'translate-x-96');
     setTimeout(() => toast.remove(), 300);
   };
-  closeBtn?.addEventListener("click", dismiss);
+  closeBtn?.addEventListener('click', dismiss);
   setTimeout(dismiss, 5000);
 }
 
 // ===== LOADING / ERROR =====
 function showLoading() {
-  document.getElementById("loadingState")?.classList.remove("hidden");
-  document.getElementById("contentState")?.classList.add("hidden");
-  document.getElementById("errorState")?.classList.add("hidden");
+  document.getElementById('loadingState')?.classList.remove('hidden');
+  document.getElementById('contentState')?.classList.add('hidden');
+  document.getElementById('errorState')?.classList.add('hidden');
 }
 
 function showContent() {
-  document.getElementById("loadingState")?.classList.add("hidden");
-  document.getElementById("contentState")?.classList.remove("hidden");
-  document.getElementById("errorState")?.classList.add("hidden");
+  document.getElementById('loadingState')?.classList.add('hidden');
+  document.getElementById('contentState')?.classList.remove('hidden');
+  document.getElementById('errorState')?.classList.add('hidden');
 }
 
 function showError(message) {
-  document.getElementById("loadingState")?.classList.add("hidden");
-  document.getElementById("contentState")?.classList.add("hidden");
-  document.getElementById("errorState")?.classList.remove("hidden");
-  showToast(message, "error");
+  document.getElementById('loadingState')?.classList.add('hidden');
+  document.getElementById('contentState')?.classList.add('hidden');
+  document.getElementById('errorState')?.classList.remove('hidden');
+  showToast(message, 'error');
 }
 
 // ===== CARRINHO =====
 function updateCartUI() {
   const cartCount = APP.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = APP.cart.reduce(
-    (sum, item) => sum + item.productPrice * item.quantity,
-    0,
-  );
+  const cartTotal = APP.cart.reduce((sum, item) => sum + item.productPrice * item.quantity, 0);
 
   // Badge flutuante
-  const badge = document.getElementById("cartBadge");
-  const badgeCount = document.getElementById("cartBadgeCount");
+  const badge = document.getElementById('cartBadge');
+  const badgeCount = document.getElementById('cartBadgeCount');
   if (badge) {
     if (cartCount > 0) {
-      badge.classList.remove("hidden");
+      badge.classList.remove('hidden');
       badge.textContent = cartCount;
     } else {
-      badge.classList.add("hidden");
+      badge.classList.add('hidden');
     }
   }
   if (badgeCount) badgeCount.textContent = cartCount;
 
   // Subtotal no drawer
-  const subtotalEl = document.getElementById("cartSubtotal");
+  const subtotalEl = document.getElementById('cartSubtotal');
   if (subtotalEl) subtotalEl.textContent = formatPrice(cartTotal);
 
   // Lista de itens
-  const container = document.getElementById("cartItemsContainer");
-  const emptyMsg = document.getElementById("emptyCartMessage");
+  const container = document.getElementById('cartItemsContainer');
+  const emptyMsg = document.getElementById('emptyCartMessage');
   if (!container) return;
 
   if (APP.cart.length === 0) {
-    container.innerHTML = "";
-    if (emptyMsg) emptyMsg.classList.remove("hidden");
+    container.innerHTML = '';
+    if (emptyMsg) emptyMsg.classList.remove('hidden');
     return;
   }
-  if (emptyMsg) emptyMsg.classList.add("hidden");
+  if (emptyMsg) emptyMsg.classList.add('hidden');
 
   container.innerHTML = APP.cart
     .map(
@@ -181,26 +165,24 @@ function updateCartUI() {
         <button class="remove-btn" data-product-id="${item.productId}"><i class="fas fa-trash"></i></button>
       </div>
     </div>
-  `,
+  `
     )
-    .join("");
+    .join('');
 
   // Eventos dos botões
-  container.querySelectorAll(".qty-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
+  container.querySelectorAll('.qty-btn').forEach((btn) => {
+    btn.addEventListener('click', function () {
       const id = this.dataset.productId;
       const item = APP.cart.find((i) => i.productId === id);
       if (!item) return;
       const newQty =
-        this.dataset.action === "increase"
-          ? item.quantity + 1
-          : item.quantity - 1;
+        this.dataset.action === 'increase' ? item.quantity + 1 : item.quantity - 1;
       updateCartQuantity(id, newQty);
     });
   });
 
-  container.querySelectorAll(".remove-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
+  container.querySelectorAll('.remove-btn').forEach((btn) => {
+    btn.addEventListener('click', function () {
       removeFromCart(this.dataset.productId);
     });
   });
@@ -219,7 +201,7 @@ function addToCart(productId, productName, productPrice) {
     });
   }
   updateCartUI();
-  showToast(`${productName} adicionado à sacola!`, "success");
+  showToast(`${productName} adicionado à sacola!`, 'success');
 }
 
 function removeFromCart(productId) {
@@ -245,61 +227,58 @@ function clearCart() {
 
 // ===== WHATSAPP =====
 function generateOrderMessage() {
-  if (APP.cart.length === 0) return "";
-  let msg = "🛍️ *Novo Pedido*\n\n";
-  msg += "*Produtos:*\n";
+  if (APP.cart.length === 0) return '';
+  let msg = '🛍️ *Novo Pedido*\n\n';
+  msg += '*Produtos:*\n';
   APP.cart.forEach((item, i) => {
     msg += `${i + 1}. ${item.productName} — ${item.quantity}x — ${formatPrice(item.productPrice * item.quantity)}\n`;
   });
-  const total = APP.cart.reduce(
-    (sum, i) => sum + i.productPrice * i.quantity,
-    0,
-  );
+  const total = APP.cart.reduce((sum, i) => sum + i.productPrice * i.quantity, 0);
   msg += `\n*Total: ${formatPrice(total)}*`;
   return msg;
 }
 
 function sendToWhatsApp(message) {
-  const whatsapp = APP.catalog?.whatsapp?.replace(/\D/g, "") || "";
+  const whatsapp = APP.catalog?.whatsapp?.replace(/\D/g, '') || '';
   if (!whatsapp) {
-    showToast("Número do WhatsApp não configurado.", "error");
+    showToast('Número do WhatsApp não configurado.', 'error');
     return;
   }
   const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
-  window.open(url, "_blank");
+  window.open(url, '_blank');
 }
 
 function sendOrder() {
   const msg = generateOrderMessage();
   if (!msg) {
-    showToast("Sacola vazia. Adicione produtos primeiro.", "error");
+    showToast('Sacola vazia. Adicione produtos primeiro.', 'error');
     return;
   }
   sendToWhatsApp(msg);
   clearCart();
   closeCartDrawer();
-  showToast("Pedido enviado! Acompanhe no WhatsApp.", "success");
+  showToast('Pedido enviado! Acompanhe no WhatsApp.', 'success');
 }
 
 // ===== DRAWER =====
 function openCartDrawer() {
-  const drawer = document.getElementById("cartDrawer");
+  const drawer = document.getElementById('cartDrawer');
   if (!drawer) return;
-  drawer.classList.remove("hidden");
+  drawer.classList.remove('hidden');
   // Pequeno delay para a animação
   requestAnimationFrame(() => {
-    const panel = drawer.querySelector(".drawer-panel");
-    if (panel) panel.classList.add("open");
+    const panel = drawer.querySelector('.drawer-panel');
+    if (panel) panel.classList.add('open');
   });
 }
 
 function closeCartDrawer() {
-  const drawer = document.getElementById("cartDrawer");
+  const drawer = document.getElementById('cartDrawer');
   if (!drawer) return;
-  const panel = drawer.querySelector(".drawer-panel");
-  if (panel) panel.classList.remove("open");
+  const panel = drawer.querySelector('.drawer-panel');
+  if (panel) panel.classList.remove('open');
   setTimeout(() => {
-    drawer.classList.add("hidden");
+    drawer.classList.add('hidden');
   }, 350);
 }
 
@@ -307,25 +286,23 @@ function closeCartDrawer() {
 function renderCatalog() {
   if (!APP.catalog) return;
   const { nome_loja, logo_url, cor_tema, whatsapp } = APP.catalog;
-  const themeColor = cor_tema || "#6C5CE7";
+  const themeColor = cor_tema || '#6C5CE7';
   APP.themeColor = themeColor;
 
   // Hero
-  document.getElementById("heroStoreName").textContent =
-    nome_loja || "Minha Loja";
+  document.getElementById('heroStoreName').textContent = nome_loja || 'Minha Loja';
   if (logo_url) {
-    document.getElementById("heroLogoEmoji").style.display = "none";
-    const img = document.getElementById("heroLogoImg");
+    document.getElementById('heroLogoEmoji').style.display = 'none';
+    const img = document.getElementById('heroLogoImg');
     img.src = logo_url;
-    img.classList.remove("hidden");
+    img.classList.remove('hidden');
   }
   if (whatsapp) {
-    document.getElementById("heroCTAWhatsApp").href =
-      `https://wa.me/${whatsapp.replace(/\D/g, "")}`;
+    document.getElementById('heroCTAWhatsApp').href = `https://wa.me/${whatsapp.replace(/\D/g, '')}`;
   }
 
   // Aplicar cor tema
-  const hero = document.getElementById("heroSection");
+  const hero = document.getElementById('heroSection');
   hero.style.background = `linear-gradient(135deg, ${themeColor}, ${shadeColor(themeColor, -20)})`;
 
   // Renderizar produtos e categorias
@@ -334,15 +311,15 @@ function renderCatalog() {
 }
 
 function renderProducts() {
-  const container = document.getElementById("productsContainer");
+  const container = document.getElementById('productsContainer');
   if (!container) return;
-  container.innerHTML = "";
+  container.innerHTML = '';
 
   if (APP.filteredProducts.length === 0) {
-    document.getElementById("noResultsState")?.classList.remove("hidden");
+    document.getElementById('noResultsState')?.classList.remove('hidden');
     return;
   }
-  document.getElementById("noResultsState")?.classList.add("hidden");
+  document.getElementById('noResultsState')?.classList.add('hidden');
 
   APP.filteredProducts.forEach((product) => {
     const card = createProductCard(product);
@@ -353,8 +330,8 @@ function renderProducts() {
 function createProductCard(product) {
   const { id, nome, preco, descricao, categoria } = product;
   const theme = APP.themeColor;
-  const card = document.createElement("div");
-  card.className = "product-card";
+  const card = document.createElement('div');
+  card.className = 'product-card';
 
   const priceNum = parseFloat(preco) || 0;
   const productId = id || Math.random().toString(36).substr(2, 9);
@@ -362,9 +339,9 @@ function createProductCard(product) {
   card.innerHTML = `
     <div class="product-image">📦</div>
     <div class="p-3 space-y-2 flex flex-col flex-1">
-      <h3 class="product-title">${escapeHTML(nome || "Produto")}</h3>
-      ${descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${escapeHTML(descricao)}</p>` : ""}
-      <span class="inline-block text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${theme}20; color:${theme}">${escapeHTML(categoria || "Geral")}</span>
+      <h3 class="product-title">${escapeHTML(nome || 'Produto')}</h3>
+      ${descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${escapeHTML(descricao)}</p>` : ''}
+      <span class="inline-block text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${theme}20; color:${theme}">${escapeHTML(categoria || 'Geral')}</span>
       <div class="flex items-center justify-between pt-1">
         <span class="product-price">${formatPrice(priceNum)}</span>
         <button class="btn-cart w-10 h-10 rounded-full flex items-center justify-center text-white" style="background:${theme}" data-product-id="${productId}" data-product-name="${escapeHTML(nome)}" data-product-price="${priceNum}">
@@ -382,38 +359,36 @@ function createProductCard(product) {
 }
 
 function renderCategoryFilters() {
-  const categories = new Set(["todos"]);
+  const categories = new Set(['todos']);
   APP.allProducts.forEach((p) => {
     if (p.categoria) categories.add(p.categoria.toLowerCase());
   });
 
-  const container = document.getElementById("categoryFilters");
+  const container = document.getElementById('categoryFilters');
   if (!container) return;
 
   // Limpa (mantém apenas o "Todos" que já existe)
-  container.innerHTML = "";
-  const allBtn = document.createElement("button");
-  allBtn.className = "category-filter active";
-  allBtn.dataset.category = "todos";
-  allBtn.textContent = "Todos";
+  container.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'category-filter active';
+  allBtn.dataset.category = 'todos';
+  allBtn.textContent = 'Todos';
   container.appendChild(allBtn);
 
   categories.forEach((cat) => {
-    if (cat === "todos") return;
-    const btn = document.createElement("button");
-    btn.className = "category-filter";
+    if (cat === 'todos') return;
+    const btn = document.createElement('button');
+    btn.className = 'category-filter';
     btn.dataset.category = cat;
     btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
     container.appendChild(btn);
   });
 
   // Event listeners
-  container.querySelectorAll(".category-filter").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      container
-        .querySelectorAll(".category-filter")
-        .forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
+  container.querySelectorAll('.category-filter').forEach((btn) => {
+    btn.addEventListener('click', function () {
+      container.querySelectorAll('.category-filter').forEach((b) => b.classList.remove('active'));
+      this.classList.add('active');
       APP.currentFilters.category = this.dataset.category;
       filterProducts();
     });
@@ -426,7 +401,7 @@ function filterProducts() {
 
   const { category, search, sortBy, maxPrice } = APP.currentFilters;
 
-  if (category !== "todos") {
+  if (category !== 'todos') {
     filtered = filtered.filter((p) => p.categoria?.toLowerCase() === category);
   }
 
@@ -436,24 +411,20 @@ function filterProducts() {
       (p) =>
         p.nome?.toLowerCase().includes(term) ||
         p.descricao?.toLowerCase().includes(term) ||
-        p.categoria?.toLowerCase().includes(term),
+        p.categoria?.toLowerCase().includes(term)
     );
   }
 
   filtered = filtered.filter((p) => (parseFloat(p.preco) || 0) <= maxPrice);
 
   switch (sortBy) {
-    case "price-low":
-      filtered.sort(
-        (a, b) => (parseFloat(a.preco) || 0) - (parseFloat(b.preco) || 0),
-      );
+    case 'price-low':
+      filtered.sort((a, b) => (parseFloat(a.preco) || 0) - (parseFloat(b.preco) || 0));
       break;
-    case "price-high":
-      filtered.sort(
-        (a, b) => (parseFloat(b.preco) || 0) - (parseFloat(a.preco) || 0),
-      );
+    case 'price-high':
+      filtered.sort((a, b) => (parseFloat(b.preco) || 0) - (parseFloat(a.preco) || 0));
       break;
-    case "newest":
+    case 'newest':
       filtered.reverse();
       break;
     default: // relevância (mantém ordem original)
@@ -467,30 +438,22 @@ function filterProducts() {
 // ===== EVENT LISTENERS =====
 function setupEventListeners() {
   // Carrinho
-  document.getElementById("btnCart")?.addEventListener("click", openCartDrawer);
-  document
-    .getElementById("closeCartDrawer")
-    ?.addEventListener("click", closeCartDrawer);
-  document
-    .getElementById("cartBackdrop")
-    ?.addEventListener("click", closeCartDrawer);
-  document
-    .getElementById("continuShoppingBtn")
-    ?.addEventListener("click", closeCartDrawer);
-  document
-    .getElementById("confirmOrderBtn")
-    ?.addEventListener("click", sendOrder);
+  document.getElementById('btnCart')?.addEventListener('click', openCartDrawer);
+  document.getElementById('closeCartDrawer')?.addEventListener('click', closeCartDrawer);
+  document.getElementById('cartBackdrop')?.addEventListener('click', closeCartDrawer);
+  document.getElementById('continuShoppingBtn')?.addEventListener('click', closeCartDrawer);
+  document.getElementById('confirmOrderBtn')?.addEventListener('click', sendOrder);
 
   // Busca
-  const searchInput = document.getElementById("searchInput");
-  const searchClear = document.getElementById("searchClear");
-  const searchResults = document.getElementById("searchResults");
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
+  const searchResults = document.getElementById('searchResults');
 
-  searchInput?.addEventListener("input", function () {
+  searchInput?.addEventListener('input', function () {
     const val = this.value;
     APP.currentFilters.search = val;
     if (val.trim()) {
-      searchClear?.classList.remove("hidden");
+      searchClear?.classList.remove('hidden');
       // Sugestões rápidas (opcional)
       const suggestions = APP.allProducts
         .filter((p) => p.nome?.toLowerCase().includes(val.toLowerCase()))
@@ -503,52 +466,50 @@ function setupEventListeners() {
             <p class="text-sm font-semibold">${escapeHTML(p.nome)}</p>
             <p class="text-xs text-slate-500">${formatPrice(parseFloat(p.preco) || 0)}</p>
           </div>
-        `,
+        `
           )
-          .join("");
-        searchResults.classList.remove("hidden");
-        searchResults.querySelectorAll("div").forEach((el) => {
-          el.addEventListener("click", function () {
+          .join('');
+        searchResults.classList.remove('hidden');
+        searchResults.querySelectorAll('div').forEach((el) => {
+          el.addEventListener('click', function () {
             const id = this.dataset.productId;
             const product = APP.allProducts.find((p) => p.id === id);
             if (product) {
               addToCart(product.id, product.nome, product.preco);
-              searchInput.value = "";
-              searchClear?.classList.add("hidden");
-              searchResults.classList.add("hidden");
+              searchInput.value = '';
+              searchClear?.classList.add('hidden');
+              searchResults.classList.add('hidden');
             }
           });
         });
       } else {
-        searchResults.classList.add("hidden");
+        searchResults.classList.add('hidden');
       }
     } else {
-      searchClear?.classList.add("hidden");
-      searchResults.classList.add("hidden");
+      searchClear?.classList.add('hidden');
+      searchResults.classList.add('hidden');
     }
     filterProducts();
   });
 
-  searchClear?.addEventListener("click", function () {
-    searchInput.value = "";
-    APP.currentFilters.search = "";
-    this.classList.add("hidden");
-    searchResults?.classList.add("hidden");
+  searchClear?.addEventListener('click', function () {
+    searchInput.value = '';
+    APP.currentFilters.search = '';
+    this.classList.add('hidden');
+    searchResults?.classList.add('hidden');
     filterProducts();
   });
 
   // Ordenação
-  document
-    .getElementById("sortSelect")
-    ?.addEventListener("change", function () {
-      APP.currentFilters.sortBy = this.value;
-      filterProducts();
-    });
+  document.getElementById('sortSelect')?.addEventListener('change', function () {
+    APP.currentFilters.sortBy = this.value;
+    filterProducts();
+  });
 
   // Preço
-  const priceRange = document.getElementById("priceRange");
-  const priceValue = document.getElementById("priceValue");
-  priceRange?.addEventListener("input", function () {
+  const priceRange = document.getElementById('priceRange');
+  const priceValue = document.getElementById('priceValue');
+  priceRange?.addEventListener('input', function () {
     const val = parseFloat(this.value);
     APP.currentFilters.maxPrice = val;
     priceValue.textContent = formatPrice(val);
@@ -556,8 +517,8 @@ function setupEventListeners() {
   });
 
   // Delegação de eventos para botões de produto (adicionar/comprar)
-  document.addEventListener("click", function (e) {
-    const target = e.target.closest(".btn-cart");
+  document.addEventListener('click', function (e) {
+    const target = e.target.closest('.btn-cart');
     if (target) {
       e.preventDefault();
       const id = target.dataset.productId;
@@ -566,7 +527,7 @@ function setupEventListeners() {
       addToCart(id, name, price);
       return;
     }
-    const buyBtn = e.target.closest(".btn-buy");
+    const buyBtn = e.target.closest('.btn-buy');
     if (buyBtn) {
       e.preventDefault();
       const id = buyBtn.dataset.productId;
@@ -579,12 +540,9 @@ function setupEventListeners() {
   });
 
   // Fechar resultados ao clicar fora
-  document.addEventListener("click", function (e) {
-    if (
-      !e.target.closest("#searchInput") &&
-      !e.target.closest("#searchResults")
-    ) {
-      searchResults?.classList.add("hidden");
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+      searchResults?.classList.add('hidden');
     }
   });
 }
@@ -592,10 +550,10 @@ function setupEventListeners() {
 // ===== API =====
 function getCatalogHash() {
   const params = new URLSearchParams(window.location.search);
-  const hash = params.get("hash") || params.get("slug");
+  const hash = params.get('hash') || params.get('slug');
   if (hash) return hash;
-  const path = window.location.pathname.split("/");
-  if (path[1] === "c" && path[2]) return path[2];
+  const path = window.location.pathname.split('/');
+  if (path[1] === 'c' && path[2]) return path[2];
   return null;
 }
 
@@ -619,68 +577,20 @@ async function loadCatalog() {
   // DADOS DE EXEMPLO (fallback caso não haja backend)
   const mockData = {
     catalogo: {
-      nome_loja: "Loja Exemplo",
-      logo_url: "",
-      cor_tema: "#6C5CE7",
-      whatsapp: "5511999999999",
+      nome_loja: 'Loja Exemplo',
+      logo_url: '',
+      cor_tema: '#6C5CE7',
+      whatsapp: '5511999999999',
     },
     produtos: [
-      {
-        id: "1",
-        nome: "Troca de Bateria iPhone",
-        descricao: "Bateria nova com calibração",
-        preco: 249.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "2",
-        nome: "Troca de Câmera Traseira",
-        descricao: "Troca do módulo traseiro",
-        preco: 399.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "3",
-        nome: "Troca de Câmera Frontal",
-        descricao: "Reparo da câmera de selfie",
-        preco: 279.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "4",
-        nome: "Troca de Conector de Carga",
-        descricao: "Limpeza e troca da peça",
-        preco: 199.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "5",
-        nome: "Reparo de Face ID",
-        descricao: "Diagnóstico e recuperação do sistema",
-        preco: 349.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "6",
-        nome: "Troca de Alto-falante",
-        descricao: "Substituição do alto-falante inferior",
-        preco: 189.9,
-        categoria: "Reparo",
-      },
-      {
-        id: "7",
-        nome: "Carregador Turbo 20W",
-        descricao: "Carregador rápido USB-C",
-        preco: 89.9,
-        categoria: "Acessório",
-      },
-      {
-        id: "8",
-        nome: "Capa de Silicone iPhone",
-        descricao: "Capa anti-impacto",
-        preco: 49.9,
-        categoria: "Acessório",
-      },
+      { id: '1', nome: 'Troca de Bateria iPhone', descricao: 'Bateria nova com calibração', preco: 249.90, categoria: 'Reparo' },
+      { id: '2', nome: 'Troca de Câmera Traseira', descricao: 'Troca do módulo traseiro', preco: 399.90, categoria: 'Reparo' },
+      { id: '3', nome: 'Troca de Câmera Frontal', descricao: 'Reparo da câmera de selfie', preco: 279.90, categoria: 'Reparo' },
+      { id: '4', nome: 'Troca de Conector de Carga', descricao: 'Limpeza e troca da peça', preco: 199.90, categoria: 'Reparo' },
+      { id: '5', nome: 'Reparo de Face ID', descricao: 'Diagnóstico e recuperação do sistema', preco: 349.90, categoria: 'Reparo' },
+      { id: '6', nome: 'Troca de Alto-falante', descricao: 'Substituição do alto-falante inferior', preco: 189.90, categoria: 'Reparo' },
+      { id: '7', nome: 'Carregador Turbo 20W', descricao: 'Carregador rápido USB-C', preco: 89.90, categoria: 'Acessório' },
+      { id: '8', nome: 'Capa de Silicone iPhone', descricao: 'Capa anti-impacto', preco: 49.90, categoria: 'Acessório' },
     ],
   };
 
@@ -700,11 +610,11 @@ async function loadCatalog() {
     const url = `${APP.apiBaseUrl}/loja/${hash}`;
     const response = await fetchWithTimeout(url, {}, 15000);
     if (!response.ok) {
-      if (response.status === 404) throw new Error("Catálogo não encontrado");
-      throw new Error("Erro ao carregar catálogo");
+      if (response.status === 404) throw new Error('Catálogo não encontrado');
+      throw new Error('Erro ao carregar catálogo');
     }
     const data = await response.json();
-    if (!data.success) throw new Error(data.error || "Erro desconhecido");
+    if (!data.success) throw new Error(data.error || 'Erro desconhecido');
 
     APP.catalog = data.catalogo;
     APP.allProducts = data.produtos || [];
@@ -713,7 +623,7 @@ async function loadCatalog() {
     setupEventListeners();
     showContent();
   } catch (error) {
-    console.warn("Falha na API, usando dados mock:", error.message);
+    console.warn('Falha na API, usando dados mock:', error.message);
     // Fallback para mock
     APP.catalog = mockData.catalogo;
     APP.allProducts = mockData.produtos;
@@ -721,9 +631,9 @@ async function loadCatalog() {
     renderCatalog();
     setupEventListeners();
     showContent();
-    showToast("Usando dados de exemplo (offline)", "info");
+    showToast('Usando dados de exemplo (offline)', 'info');
   }
 }
 
 // ===== INICIALIZAÇÃO =====
-document.addEventListener("DOMContentLoaded", loadCatalog);
+document.addEventListener('DOMContentLoaded', loadCatalog);
