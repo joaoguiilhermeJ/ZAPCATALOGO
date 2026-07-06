@@ -30,7 +30,7 @@
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    button, input { font: inherit; }
+    button, input, select { font: inherit; }
     button { -webkit-tap-highlight-color: transparent; }
     [hidden] { display: none !important; }
 
@@ -107,6 +107,21 @@
     .product-price { display: block; margin-bottom: 9px; color: #101828; font-size: 18px; font-weight: 850; letter-spacing: -.03em; }
     .buy-button { width: 100%; min-height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12px; }
     .buy-button .icon { width: 17px; height: 17px; }
+    .product-actions { display: grid; gap: 8px; }
+    .add-cart-button { width: 100%; min-height: 42px; padding: 0 10px; border: 1px solid var(--theme); border-radius: 12px; color: var(--theme-dark); background: var(--theme-soft); font-size: 12px; font-weight: 800; cursor: pointer; }
+    .filters-panel { margin-bottom: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 5px 18px rgba(16,24,40,.04); }
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .filter-field { min-width: 0; }
+    .filter-field:first-child { grid-column: 1 / -1; }
+    .filter-field label { display: block; margin: 0 0 6px; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .filter-control { width: 100%; height: 44px; padding: 0 11px; border: 1px solid var(--line); border-radius: 12px; outline: 0; color: var(--ink); background: #f9fafb; appearance: none; }
+    .filter-control:focus { border-color: var(--theme); box-shadow: 0 0 0 3px var(--theme-soft); }
+    .filters-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .clear-filters { min-height: 38px; padding: 0 13px; border: 0; border-radius: 10px; color: var(--theme-dark); background: var(--theme-soft); font-size: 13px; font-weight: 800; cursor: pointer; }
+    .cart-fab { position: fixed; z-index: 20; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); width: 62px; height: 62px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: var(--theme); box-shadow: 0 12px 30px color-mix(in srgb, var(--theme) 40%, transparent); cursor: pointer; }
+    .cart-badge { position: absolute; top: -4px; right: -2px; min-width: 24px; height: 24px; padding: 0 6px; display: grid; place-items: center; border: 2px solid #fff; border-radius: 99px; color: #fff; background: #e11d48; font-size: 11px; font-weight: 900; }
+    .toast { position: fixed; z-index: 30; left: 50%; bottom: 94px; width: max-content; max-width: calc(100% - 32px); padding: 12px 16px; border-radius: 12px; color: #fff; background: #18212f; box-shadow: var(--shadow); font-size: 14px; font-weight: 700; transform: translateX(-50%); animation: toast-in .2s ease-out; }
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 
     .state { min-height: 65vh; padding: 56px 22px; display: grid; place-items: center; text-align: center; }
     .state-card { width: min(100%, 430px); padding: 30px 22px; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: var(--shadow); }
@@ -132,6 +147,9 @@
       .product-body { flex: 1; padding: 16px; }
       .product-description { font-size: 13px; }
       .buy-button { min-height: 46px; font-size: 13px; }
+      .add-cart-button { min-height: 46px; font-size: 13px; }
+      .filter-grid { grid-template-columns: 1.5fr 1fr 1fr; }
+      .filter-field:first-child { grid-column: auto; }
     }
     @media (min-width: 760px) {
       body { padding: 24px 18px; }
@@ -191,6 +209,14 @@
           <button id="clearSearch" class="clear-search" type="button" aria-label="Limpar busca" hidden>✕</button>
         </div>
         <nav id="categoryFilters" class="categories" aria-label="Categorias"></nav>
+        <section class="filters-panel" aria-label="Filtros dos produtos">
+          <div class="filter-grid">
+            <div class="filter-field"><label for="sortSelect">Ordenar por</label><select id="sortSelect" class="filter-control"><option value="relevance">Relevância</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="name-asc">Nome A–Z</option></select></div>
+            <div class="filter-field"><label for="minPrice">Preço mínimo</label><input id="minPrice" class="filter-control" type="number" min="0" step="0.01" inputmode="decimal" placeholder="R$ 0"></div>
+            <div class="filter-field"><label for="maxPrice">Preço máximo</label><input id="maxPrice" class="filter-control" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Sem limite"></div>
+          </div>
+          <div class="filters-footer"><button id="clearFilters" class="clear-filters" type="button">Limpar filtros</button></div>
+        </section>
         <div class="section-heading"><h2>Produtos</h2><span id="productCount" class="product-count"></span></div>
         <div id="productsContainer" class="products-grid"></div>
         <section id="emptyState" class="state" hidden>
@@ -203,6 +229,8 @@
       </div>
     </main>
   </div>
+  <button id="cartButton" class="cart-fab" type="button" aria-label="Abrir carrinho"><svg class="icon" viewBox="0 0 24 24"><path d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM6.2 6l.7 2H20l-2.1 6H8.8L5.2 3H2v2h1.8l3.6 10.7A2 2 0 0 0 9.3 17H19v-2H9.3l-.3-1H19a1 1 0 0 0 .9-.7l2.7-7.6A1 1 0 0 0 21.7 4H6l-.7-2H2v2h1.8L6.2 6Z"/></svg><span id="cartBadge" class="cart-badge" hidden>0</span></button>
+  <div id="toast" class="toast" role="status" hidden></div>
 
   <script>
     "use strict";
@@ -213,14 +241,16 @@
       if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return "";
       return configured.replace(/\/$/, "").replace(/\/api$/, "");
     })();
-    const state = { loja: null, produtos: [], categoria: "todos", busca: "" };
+    const state = { loja: null, produtos: [], carrinho: [], categoria: "todos", busca: "", ordem: "relevance", precoMin: null, precoMax: null, slug: "" };
     const elements = {
       loading: document.getElementById("loadingState"), error: document.getElementById("errorState"), content: document.getElementById("contentState"),
       errorTitle: document.getElementById("errorTitle"), errorMessage: document.getElementById("errorMessage"), retry: document.getElementById("retryButton"),
       avatar: document.getElementById("storeAvatar"), storeName: document.getElementById("storeName"), whatsapp: document.getElementById("storeWhatsapp"),
       search: document.getElementById("searchInput"), clearSearch: document.getElementById("clearSearch"), categories: document.getElementById("categoryFilters"),
       products: document.getElementById("productsContainer"), count: document.getElementById("productCount"), empty: document.getElementById("emptyState"),
-      emptyTitle: document.getElementById("emptyTitle"), emptyMessage: document.getElementById("emptyMessage")
+      emptyTitle: document.getElementById("emptyTitle"), emptyMessage: document.getElementById("emptyMessage"),
+      sort: document.getElementById("sortSelect"), minPrice: document.getElementById("minPrice"), maxPrice: document.getElementById("maxPrice"), clearFilters: document.getElementById("clearFilters"),
+      cartButton: document.getElementById("cartButton"), cartBadge: document.getElementById("cartBadge"), toast: document.getElementById("toast")
     };
 
     function obterSlug() {
@@ -240,6 +270,28 @@
     function formatarPreco(valor) {
       return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor) || 0);
     }
+
+    function chaveCarrinho() { return `zapcatalogo:carrinho:${state.slug}`; }
+    function carregarCarrinho() {
+      try { const salvo = JSON.parse(localStorage.getItem(chaveCarrinho()) || "[]"); state.carrinho = Array.isArray(salvo) ? salvo : []; } catch { state.carrinho = []; }
+      atualizarContadorCarrinho();
+    }
+    function salvarCarrinho() { localStorage.setItem(chaveCarrinho(), JSON.stringify(state.carrinho)); atualizarContadorCarrinho(); }
+    function atualizarContadorCarrinho() {
+      const total = state.carrinho.reduce((s, item) => s + (Number(item.quantidade) || 0), 0);
+      elements.cartBadge.textContent = total > 99 ? "99+" : total;
+      elements.cartBadge.hidden = total === 0;
+      elements.cartButton.setAttribute("aria-label", `Abrir carrinho, ${total} ${total === 1 ? "item" : "itens"}`);
+    }
+    function mostrarToast(mensagem) { elements.toast.textContent = mensagem; elements.toast.hidden = false; clearTimeout(mostrarToast.timer); mostrarToast.timer = setTimeout(() => { elements.toast.hidden = true; }, 2200); }
+    function adicionarAoCarrinho(produto) {
+      const id = String(produto.id ?? produto.codigo ?? produto.nome);
+      const existente = state.carrinho.find(item => item.id === id);
+      if (existente) existente.quantidade += 1;
+      else state.carrinho.push({ id, nome: produto.nome || "Produto", preco: Number(produto.preco) || 0, imagem_url: obterImagem(produto), quantidade: 1 });
+      salvarCarrinho(); mostrarToast(`${produto.nome || "Produto"} adicionado ao carrinho`);
+    }
+    function abrirCarrinho() { window.location.href = `/c/${encodeURIComponent(state.slug)}/carrinho`; }
 
     function normalizarCor(cor) {
       return /^#[0-9a-f]{6}$/i.test(cor || "") ? cor : DEFAULT_THEME;
@@ -310,9 +362,10 @@
           ${produto.descricao ? `<p class="product-description">${escaparHTML(produto.descricao)}</p>` : ""}
           <div class="product-footer">
             <strong class="product-price">${formatarPreco(produto.preco)}</strong>
-            <button class="buy-button" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar no WhatsApp</button>
+            <div class="product-actions"><button class="add-cart-button" type="button">Adicionar ao carrinho</button><button class="buy-button" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar agora</button></div>
           </div>`;
       card.querySelector(".buy-button").addEventListener("click", () => abrirWhatsApp(nome));
+      card.querySelector(".add-cart-button").addEventListener("click", () => adicionarAoCarrinho(produto));
       const img = card.querySelector("img");
       img?.addEventListener("error", () => { img.parentElement.innerHTML = `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`; }, { once: true });
       return card;
@@ -320,12 +373,17 @@
 
     function produtosFiltrados() {
       const termo = state.busca.trim().toLocaleLowerCase("pt-BR");
-      return state.produtos.filter(produto => {
+      const filtrados = state.produtos.filter(produto => {
         const categoria = String(produto.categoria || "Geral");
         const correspondeCategoria = state.categoria === "todos" || categoria === state.categoria;
         const texto = `${produto.nome || ""} ${produto.descricao || ""} ${categoria}`.toLocaleLowerCase("pt-BR");
-        return correspondeCategoria && (!termo || texto.includes(termo));
+        const preco = Number(produto.preco) || 0;
+        return correspondeCategoria && (!termo || texto.includes(termo)) && (state.precoMin === null || preco >= state.precoMin) && (state.precoMax === null || preco <= state.precoMax);
       });
+      if (state.ordem === "price-asc") filtrados.sort((a, b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
+      if (state.ordem === "price-desc") filtrados.sort((a, b) => (Number(b.preco) || 0) - (Number(a.preco) || 0));
+      if (state.ordem === "name-asc") filtrados.sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+      return filtrados;
     }
 
     function renderizarProdutos() {
@@ -370,6 +428,8 @@
         return;
       }
       try {
+        state.slug = slug;
+        carregarCarrinho();
         const resposta = await fetch(`${API_ORIGIN}/api/loja/${encodeURIComponent(slug)}`, { headers: { Accept: "application/json" } });
         if (resposta.status === 404) {
           mostrarEstado("error", { titulo: "Loja não encontrada", mensagem: "Este catálogo não existe ou não está mais disponível.", retry: false });
@@ -403,6 +463,11 @@
     });
     elements.whatsapp.addEventListener("click", () => abrirWhatsApp());
     elements.retry.addEventListener("click", carregarCatalogo);
+    elements.sort.addEventListener("change", event => { state.ordem = event.target.value; renderizarProdutos(); });
+    elements.minPrice.addEventListener("input", event => { state.precoMin = event.target.value === "" ? null : Math.max(0, Number(event.target.value)); renderizarProdutos(); });
+    elements.maxPrice.addEventListener("input", event => { state.precoMax = event.target.value === "" ? null : Math.max(0, Number(event.target.value)); renderizarProdutos(); });
+    elements.clearFilters.addEventListener("click", () => { state.busca = ""; state.categoria = "todos"; state.ordem = "relevance"; state.precoMin = null; state.precoMax = null; elements.search.value = ""; elements.clearSearch.hidden = true; elements.sort.value = "relevance"; elements.minPrice.value = ""; elements.maxPrice.value = ""; renderizarCategorias(); renderizarProdutos(); });
+    elements.cartButton.addEventListener("click", abrirCarrinho);
     document.addEventListener("DOMContentLoaded", carregarCatalogo);
   </script>
 </body>
