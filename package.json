@@ -6,11 +6,17 @@
   "scripts": {
     "dev": "node dev-server.js",
     "start": "node dev-server.js",
-    "dev:all": "npx concurrently \"cd BACKEND/ZAPCATALOGOBACKEND && node src/index.js\" \"node dev-server.js\""
+    "dev:all": "npx concurrently \"cd BACKEND/ZAPCATALOGOBACKEND && node src/index.js\" \"node dev-server.js\"",
+    "build:css": "npx tailwindcss -i src/styles/tailwind.css -o public/css/tailwind.build.css --minify",
+    "watch:css": "npx tailwindcss -i src/styles/tailwind.css -o public/css/tailwind.build.css --watch"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "autoprefixer": "^10.5.2",
     "concurrently": "^10.0.3",
     "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6"
+    "http-proxy-middleware": "^2.0.6",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^4.3.2"
   }
 }
