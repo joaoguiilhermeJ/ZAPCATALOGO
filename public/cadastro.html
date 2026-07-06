@@ -538,6 +538,20 @@
 
           </form>
 
+          <section id="productImagesStep" class="hidden" aria-labelledby="productImagesTitle">
+            <div class="mb-6">
+              <span class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                <i class="fas fa-check-circle"></i> Produtos importados
+              </span>
+              <h2 id="productImagesTitle" class="mt-4 text-2xl font-extrabold text-slate-900">Adicione imagens aos produtos</h2>
+              <p class="mt-2 text-sm text-slate-500">Esta etapa é opcional. Você pode publicar o catálogo quando terminar.</p>
+            </div>
+            <div id="importedProductsList" class="space-y-3"></div>
+            <a id="openCatalogButton" class="btn-cadastro mt-6 text-center" href="#">
+              <i class="fas fa-external-link-alt"></i> <span>Abrir catálogo</span>
+            </a>
+          </section>
+
         </div>
       </div>
 
@@ -817,6 +831,9 @@
       var colorSwatches   = document.querySelectorAll('.color-swatch');
       var customColor     = $('customColor');
       var btnSubmit       = $('btnSubmit');
+      var productImagesStep = $('productImagesStep');
+      var importedProductsList = $('importedProductsList');
+      var openCatalogButton = $('openCatalogButton');
       var previewGlow     = $('previewGlow');
       var previewContent  = $('previewContent');
 
@@ -1216,6 +1233,80 @@
         btnSubmit.innerHTML = '<i class="fas fa-magic"></i> <span>Concluir e Gerar Catálogo</span>';
       }
 
+      function renderImportedProducts(produtos, apiUrl) {
+        importedProductsList.replaceChildren();
+
+        produtos.forEach(function (produto) {
+          var row = document.createElement('article');
+          row.className = 'flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm';
+
+          var preview = document.createElement('div');
+          preview.className = 'flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-300';
+          preview.innerHTML = '<i class="fas fa-image text-2xl" aria-hidden="true"></i>';
+
+          var info = document.createElement('div');
+          info.className = 'min-w-0 flex-1';
+          var name = document.createElement('p');
+          name.className = 'truncate text-sm font-bold text-slate-800';
+          name.textContent = produto.nome || 'Produto';
+          var status = document.createElement('p');
+          status.className = 'mt-1 text-xs text-slate-400';
+          status.textContent = 'Sem imagem';
+
+          var input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/jpeg,image/png,image/webp';
+          input.className = 'hidden';
+
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'mt-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60';
+          button.textContent = 'Adicionar imagem';
+          button.addEventListener('click', function () { input.click(); });
+          input.addEventListener('change', async function () {
+            var file = input.files[0];
+            if (!file) return;
+
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
+            status.textContent = 'Upload em andamento';
+
+            try {
+              var imageForm = new FormData();
+              imageForm.append('imagem', file);
+              var response = await fetchWithTimeout(apiUrl + '/api/produtos/' + encodeURIComponent(produto.id) + '/imagem', {
+                method: 'POST',
+                body: imageForm
+              }, 30000);
+              var body = await response.json().catch(function () { return {}; });
+              if (!response.ok) throw new Error(body.error || 'Falha ao enviar imagem.');
+
+              var image = document.createElement('img');
+              image.src = body.imagem_url;
+              image.alt = 'Imagem de ' + (produto.nome || 'produto');
+              image.className = 'h-full w-full object-cover';
+              preview.replaceChildren(image);
+              status.textContent = 'Imagem adicionada';
+              status.className = 'mt-1 text-xs font-semibold text-green-600';
+              button.textContent = 'Trocar imagem';
+              showToast('Imagem de ' + (produto.nome || 'produto') + ' adicionada!', 'success');
+            } catch (err) {
+              status.textContent = 'Não foi possível enviar a imagem';
+              status.className = 'mt-1 text-xs font-semibold text-rose-600';
+              button.textContent = 'Tentar novamente';
+              showToast(err.message, 'error');
+            } finally {
+              button.disabled = false;
+              input.value = '';
+            }
+          });
+
+          info.append(name, status, input, button);
+          row.append(preview, info);
+          importedProductsList.appendChild(row);
+        });
+      }
+
       safeAddEventListener(form, 'submit', async function (e) {
         e.preventDefault();
         // Accessibilidade: marca o botão como ocupado para leitores de tela
@@ -1288,44 +1379,29 @@
         var catalogId = onboardingRes.catalogo.id;
         var slug = onboardingRes.catalogo.slug;
 
-        // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL (disparado em background)
-        // Para melhorar UX, iniciamos o upload em background e redirecionamos
-        // imediatamente para o catálogo. O upload continua enquanto o usuário
-        // navega — em alguns navegadores a requisição pode ser abortada pela
-        // navegação; idealmente backend processaria async. Esta abordagem é a
-        // mais rápida para mostrar o catálogo ao usuário.
+        // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL ───
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importando produtos...';
+        try {
+          var productsForm = new FormData();
+          productsForm.append('file', sheetData.file);
+          productsForm.append('catalogId', catalogId);
+          var productsResponse = await fetchWithTimeout(apiUrl + '/api/produtos/upload', {
+            method: 'POST',
+            body: productsForm
+          }, 60000);
+          var productsBody = await productsResponse.json().catch(function () { return {}; });
+          if (!productsResponse.ok) throw new Error(productsBody.error || 'Falha ao importar produtos.');
 
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando produtos em segundo plano...';
-
-        (function fireAndForgetUpload(file, catalogId) {
-          try {
-            var bgForm = new FormData();
-            bgForm.append('file', file);
-            bgForm.append('catalogId', catalogId);
-
-            // Não aguardamos; logamos resultado quando chegar (não bloqueante)
-            fetch(apiUrl + '/api/produtos/upload', {
-              method: 'POST',
-              body: bgForm
-            }).then(function (res) {
-              if (!res.ok) return res.json().catch(function(){return {}}).then(function(b){ throw new Error(b.error||'Upload falhou'); });
-              return res.json();
-            }).then(function (json) {
-              console.log('Upload background concluído:', json && json.success);
-            }).catch(function (err) {
-              console.warn('Upload background erro:', err.message || err);
-            });
-          } catch (e) {
-            console.warn('Erro ao iniciar upload background', e.message || e);
-          }
-        })(sheetData.file, catalogId);
-
-        // Limpa estado de loading e redireciona imediatamente para o slug amigável
-        resetSubmit();
-        showToast('Catálogo gerado com sucesso! Redirecionando...', 'success');
-        setTimeout(function () {
-          window.location.href = '/c/' + slug;
-        }, 300);
+          renderImportedProducts(productsBody.produtos || [], apiUrl);
+          openCatalogButton.href = '/c/' + encodeURIComponent(slug);
+          form.classList.add('hidden');
+          productImagesStep.classList.remove('hidden');
+          productImagesStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          showToast('Produtos importados. Agora você pode adicionar as imagens.', 'success');
+        } catch (err) {
+          showToast('Erro ao importar produtos: ' + err.message, 'error');
+          resetSubmit();
+        }
       });
 
       /* ─── Inicialização da Página ─── */
@@ -1347,4 +1423,3 @@
   </script>
 </body>
 </html>
-
