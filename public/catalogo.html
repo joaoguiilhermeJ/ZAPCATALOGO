@@ -1,516 +1,218 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-  <meta name="description" content="Catálogo Digital" />
-  <title>Catálogo de Produtos</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Catálogo de produtos ZapCatálogo">
+  <title>Catálogo de Produtos — ZapCatálogo</title>
 
-  <!-- Tailwind CSS via CDN (produção use build) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ═══ TAILWIND CSS (build) — use built CSS in production, not CDN ═══ -->
+  <link rel="stylesheet" href="/css/tailwind.build.css">
+  <!-- Custom overrides -->
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <!-- ═══ FONT AWESOME (Icons) ═══ -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-  <!-- Fonte Plus Jakarta Sans -->
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- ═══ PLUS JAKARTA SANS (Typography) ═══ -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ===== RESET & BASE ===== */
     * {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      background: #f8f9fe;
-      color: #1a1a2e;
-      font-size: 16px;
-      line-height: 1.5;
-      padding-bottom: 2rem;
     }
 
-    /* ===== VARIÁVEIS ===== */
-    :root {
-      --primary: #6C5CE7;
-      --primary-dark: #4834D4;
-      --primary-light: #A29BFE;
-      --surface: #f8f9fe;
-      --text-primary: #1a1a2e;
-      --text-secondary: #4a4a6a;
-      --shadow-card: 0 4px 16px rgba(108, 92, 231, 0.08);
-    }
-
-    /* ===== UTILITÁRIOS ===== */
-    .container-custom {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-    @media (min-width: 640px) {
-      .container-custom { padding: 0 1.5rem; }
-    }
-
-    /* ===== TOAST ===== */
-    #toastContainer {
-      position: fixed;
-      bottom: 1.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      width: 90%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      pointer-events: none;
-    }
-    #toastContainer > div {
-      pointer-events: auto;
-      transition: all 0.3s ease;
-    }
-
-    /* ===== HERO ===== */
-    #heroSection {
-      border-radius: 0 0 2rem 2rem;
-      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.2);
-      overflow: hidden;
-    }
-
-    /* ===== SEARCH ===== */
-    #searchInput {
-      height: 54px;
-      padding-left: 3rem;
-      padding-right: 1rem;
-      border-radius: 2rem;
-      border: 2px solid #e2e8f0;
-      background: white;
-      font-size: 1rem;
-      transition: all 0.2s;
-      width: 100%;
-    }
-    #searchInput:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.15);
-      outline: none;
-    }
-    #searchInput + .search-icon {
-      left: 1.25rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #94a3b8;
-      font-size: 1.1rem;
-      position: absolute;
-    }
-    #searchClear {
-      right: 1.25rem;
-      top: 50%;
-      transform: translateY(-50%);
-      position: absolute;
-      color: #94a3b8;
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: none;
-    }
-    #searchClear:hover { color: #475569; }
-
-    /* ===== FILTROS ===== */
-    .category-filter {
-      padding: 0.6rem 1.2rem;
-      border-radius: 2rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      white-space: nowrap;
-      background: white;
-      border: 1.5px solid #e2e8f0;
-      color: var(--text-secondary);
-      transition: all 0.2s;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .category-filter.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-    .category-filter:active { transform: scale(0.96); }
-
-    #sortSelect {
-      height: 44px;
-      background: white;
-      border-radius: 2rem;
-      border: 1.5px solid #e2e8f0;
-      padding: 0 1.2rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      outline: none;
-      transition: all 0.2s;
-      min-width: 140px;
-    }
-    #sortSelect:focus { border-color: var(--primary); }
-
-    #priceRange {
-      height: 6px;
-      accent-color: var(--primary);
-      border-radius: 4px;
-      width: 100%;
-      max-width: 160px;
-    }
-    #priceValue {
-      font-weight: 700;
-      color: var(--primary);
-      font-size: 0.9rem;
-      min-width: 70px;
-    }
-
-    /* ===== PRODUCT CARDS ===== */
-    .product-card {
-      background: white;
-      border-radius: 1.5rem;
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      flex-direction: column;
-    }
-    .product-card:active { transform: scale(0.98); }
-    .product-card .product-image {
-      height: 140px;
-      background: #f1f5f9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      color: #94a3b8;
-    }
-    .product-card .product-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: var(--text-primary);
-    }
-    .product-card .product-price {
-      font-weight: 800;
-      font-size: 1.2rem;
-      color: var(--primary);
-    }
-    .product-card .btn-buy,
-    .product-card .btn-cart {
-      padding: 0.6rem 0;
-      border-radius: 2rem;
-      font-weight: 700;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      width: 100%;
-      transition: all 0.2s;
-      border: none;
-      cursor: pointer;
-    }
-    .product-card .btn-buy {
-      background: var(--primary);
-      color: white;
-    }
-    .product-card .btn-buy:active { transform: scale(0.96); }
-    .product-card .btn-cart {
-      background: white;
-      color: var(--primary);
-      border: 2px solid var(--primary);
-    }
-    .product-card .btn-cart:active { transform: scale(0.96); }
-
-    /* ===== CART DRAWER ===== */
-    #cartDrawer .drawer-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      top: 0;
-      background: white;
-      box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      transform: translateY(100%);
-      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      border-radius: 1.5rem 1.5rem 0 0;
-      overflow: hidden;
-    }
-    #cartDrawer .drawer-panel.open {
-      transform: translateY(0);
-    }
-    @media (min-width: 640px) {
-      #cartDrawer .drawer-panel {
-        top: 0;
-        left: auto;
-        right: 0;
-        bottom: 0;
-        width: 380px;
-        border-radius: 0;
-        transform: translateX(100%);
-      }
-      #cartDrawer .drawer-panel.open {
-        transform: translateX(0);
-      }
-    }
-    #cartDrawer .drawer-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    #cartDrawer .drawer-items {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem 1.25rem;
-    }
-    #cartDrawer .drawer-footer {
-      padding: 1rem 1.25rem;
-      border-top: 1px solid #e2e8f0;
-      flex-shrink: 0;
-      background: white;
-    }
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .cart-item:last-child { border-bottom: none; }
-    .cart-item .item-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: var(--text-primary);
-    }
-    .cart-item .item-price {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    .cart-item .qty-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #f1f5f9;
-      border: none;
-      font-weight: 700;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text-primary);
-      transition: background 0.2s;
-    }
-    .cart-item .qty-btn:active { background: #e2e8f0; }
-    .cart-item .remove-btn {
-      background: none;
-      border: none;
-      color: #ef4444;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 0 0.25rem;
-    }
-
-    /* ===== SKELETON ===== */
-    .skeleton {
-      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 1.5rem;
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
-    /* ===== BADGE CARRINHO ===== */
-    #cartBadge {
-      position: absolute;
-      top: -6px;
-      right: -8px;
-      background: #ef4444;
-      color: white;
-      font-size: 0.7rem;
-      font-weight: 700;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-    }
-
-    /* ===== RESPONSIVE TWEAKS ===== */
-    @media (max-width: 480px) {
-      .product-card .product-image { height: 120px; font-size: 2.5rem; }
-      .product-card .product-title { font-size: 0.85rem; }
-      .product-card .product-price { font-size: 1rem; }
-      .category-filter { padding: 0.5rem 1rem; font-size: 0.8rem; }
-      #searchInput { height: 48px; font-size: 0.95rem; }
+    html {
+      scroll-behavior: smooth;
     }
   </style>
-</head>
-<body>
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    // Define API_BASE_URL de forma explícita para evitar desalinhamentos em produção
+    window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000'
+      : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com'); // ajuste para sua URL do Render
+    console.log('API_BASE_URL=', window.API_BASE_URL);
+      // Compatibilidade: alguns scripts (ex: catalogo.js) leem `window.API_URL`
+      // Garantir que ambos apontem para a mesma origem do backend
+      if (!window.API_URL) window.API_URL = window.API_BASE_URL;
+  </script>
+  <script src="/js/catalogo.js" defer></script>
+  </head>
+  <body class="bg-slate-50 text-slate-900">
 
-  <!-- ===== TOAST CONTAINER ===== -->
-  <div id="toastContainer"></div>
+  <!-- Toast container (used by catalogo.js) -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- ===== MAIN ===== -->
-  <main class="container-custom space-y-6 py-4">
+  <main class="max-w-6xl mx-auto px-4 py-12">
 
-    <!-- LOADING -->
-    <div id="loadingState" class="text-center py-20">
-      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6C5CE7] border-t-transparent"></div>
-      <p class="mt-4 text-slate-500 font-medium">Carregando catálogo...</p>
+    <!-- LOADING STATE -->
+    <div id="loadingState" class="text-center py-12">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="skeleton h-64 rounded-2xl"></div>
+        <div class="skeleton h-64 rounded-2xl"></div>
+        <div class="skeleton h-64 rounded-2xl"></div>
+      </div>
     </div>
 
-    <!-- ERROR -->
+    <!-- ERROR STATE -->
     <div id="errorState" class="hidden text-center py-20">
-      <i class="fas fa-exclamation-circle text-6xl text-red-400"></i>
-      <h2 class="text-2xl font-bold text-slate-900 mt-4">Catálogo não encontrado</h2>
-      <p class="text-slate-500 mt-2">Verifique a URL e tente novamente.</p>
-      <a href="/" class="inline-block mt-6 px-6 py-3 bg-[#6C5CE7] text-white rounded-full font-bold hover:bg-[#4834D4] transition">Voltar ao início</a>
+      <div class="mb-6">
+        <i class="fas fa-exclamation-circle text-6xl text-red-400"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-slate-900 mb-2">Catálogo não encontrado</h2>
+      <p class="text-slate-500 mb-6">Desculpe, não conseguimos localizar a loja que você está procurando.</p>
+      <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-smooth">
+        <i class="fas fa-arrow-left"></i> Voltar ao Início
+      </a>
     </div>
 
-    <!-- CONTENT -->
-    <div id="contentState" class="hidden space-y-6">
+    <!-- CONTENT STATE -->
+    <div id="contentState" class="hidden space-y-8">
 
-      <!-- HERO -->
-      <div id="heroSection" style="background: linear-gradient(135deg, #6C5CE7, #4834D4);">
-        <div class="px-5 py-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between sm:px-8 sm:py-10">
-          <div class="flex flex-col items-center sm:items-start gap-1">
-            <div id="heroLogo" class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-white/20 backdrop-blur-sm shadow-md">
+      <!-- ═══ HERO SECTION ═══ -->
+      <div id="heroSection" class="rounded-3xl overflow-hidden shadow-lg transition-smooth" style="background: linear-gradient(135deg, #8e7cc3 0%, #5a4a78 100%);">
+        <div class="px-6 sm:px-8 py-12 sm:py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <!-- Left: Logo + Info -->
+          <div class="flex flex-col items-center sm:items-start gap-4 flex-1">
+            <div id="heroLogo" class="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl bg-white bg-opacity-20 transition-smooth">
               <span id="heroLogoEmoji">🏪</span>
-              <img id="heroLogoImg" src="" alt="Logo" class="hidden w-full h-full object-cover rounded-2xl" />
+              <img id="heroLogoImg" src="" alt="Logo" class="w-full h-full object-cover rounded-2xl hidden">
             </div>
-            <h2 id="heroStoreName" class="text-2xl font-extrabold text-white drop-shadow">Minha Loja</h2>
-            <p class="text-white/80 text-xs flex items-center gap-1.5"><i class="fas fa-store-alt"></i> Catálogo Digital</p>
+            <div class="text-center sm:text-left">
+              <h2 id="heroStoreName" class="text-2xl sm:text-3xl font-extrabold text-white mb-2">Minha Loja</h2>
+              <p class="text-white text-opacity-80 text-sm flex items-center justify-center sm:justify-start gap-1.5">
+                <i class="fas fa-location-dot"></i> Catálogo Digital
+              </p>
+            </div>
           </div>
-          <div class="flex flex-col items-center gap-1.5 w-full sm:w-auto">
-            <span class="text-white/80 text-xs font-medium">Atendimento via WhatsApp</span>
-            <a id="heroCTAWhatsApp" href="#" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-full font-bold text-sm shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-95 transition-all w-full sm:w-auto">
-              <i class="fab fa-whatsapp text-lg"></i> Falar com a loja
+          <!-- Right: CTA -->
+          <div class="flex flex-col items-center gap-3">
+            <p class="text-white text-opacity-80 text-sm font-semibold">Fale conosco pelo WhatsApp</p>
+            <a id="heroCTAWhatsApp" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-emerald-600 rounded-full font-bold hover:shadow-lg hover:scale-105 transition-smooth btn-ripple">
+              <i class="fab fa-whatsapp text-lg"></i> WhatsApp
             </a>
           </div>
         </div>
       </div>
 
-      <!-- BUSCA -->
-      <div class="relative max-w-2xl mx-auto">
+      <!-- ═══ SEARCH BAR ═══ -->
+      <div class="relative">
         <div class="relative">
-          <i class="fas fa-search search-icon"></i>
-          <input id="searchInput" type="text" placeholder="Buscar produtos..." autocomplete="off" />
-          <button id="searchClear" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
+          <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+          <input 
+            id="searchInput" 
+            type="text" 
+            placeholder="Buscar produtos..." 
+            class="w-full pl-12 pr-4 py-3 rounded-full border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-smooth"
+          >
+          <button id="searchClear" class="hidden absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-smooth" aria-label="Limpar busca">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-slate-200 max-h-64 overflow-y-auto z-10"></div>
+        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-slate-200 max-h-64 overflow-y-auto z-10">
+        </div>
       </div>
 
-      <!-- FILTROS -->
-      <div class="space-y-3">
-        <!-- Categorias (scroll horizontal) -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+      <!-- ═══ FILTROS ═══ -->
+      <div class="space-y-4">
+        <!-- Categorias (Horizontal Scroll) -->
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
           <span class="text-sm font-semibold text-slate-600 shrink-0">Categoria:</span>
-          <div id="categoryFilters" class="flex gap-2">
-            <button class="category-filter active" data-category="todos">Todos</button>
+          <div id="categoryFilters" class="flex gap-2 overflow-x-auto pb-2 flex-1">
+            <button class="category-filter active px-4 py-2 rounded-full text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-smooth shrink-0" data-category="todos">
+              Todos
+            </button>
           </div>
         </div>
 
-        <!-- Ordenação e preço -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <span class="text-sm font-semibold text-slate-600 shrink-0">Ordenar:</span>
-            <select id="sortSelect" class="flex-1 sm:flex-initial">
-              <option value="relevance">Relevância</option>
-              <option value="price-low">Menor preço</option>
-              <option value="price-high">Maior preço</option>
-              <option value="newest">Mais novos</option>
-            </select>
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <label for="priceRange" class="text-sm font-semibold text-slate-600 shrink-0">Preço máx:</label>
-            <input id="priceRange" type="range" min="0" max="10000" step="50" value="10000" class="flex-1 sm:w-32" />
-            <span id="priceValue" class="text-sm font-bold text-[#6C5CE7]">R$ 10.000</span>
+        <!-- Ordenação e Preço -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-sm font-semibold text-slate-600">Ordenar por:</span>
+          <select id="sortSelect" class="px-4 py-2 rounded-full border border-slate-200 focus:border-blue-500 outline-none transition-smooth text-sm">
+            <option value="relevance">Relevância</option>
+            <option value="price-low">Menor Preço</option>
+            <option value="price-high">Maior Preço</option>
+            <option value="newest">Mais Novos</option>
+          </select>
+
+          <div class="flex items-center gap-2">
+            <label for="priceRange" class="text-sm font-semibold text-slate-600">Preço máx:</label>
+            <input 
+              id="priceRange" 
+              type="range" 
+              min="0" 
+              max="10000" 
+              step="50" 
+              value="10000"
+              class="w-32"
+            >
+            <span id="priceValue" class="text-sm font-bold text-slate-900">R$ 10.000</span>
           </div>
         </div>
       </div>
 
-      <!-- GRID DE PRODUTOS -->
-      <div id="productsContainer" class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <!-- ═══ GRID DE PRODUTOS ═══ -->
+      <div id="productsContainer" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       </div>
 
-      <!-- SEM RESULTADOS -->
-      <div id="noResultsState" class="hidden text-center py-16">
-        <i class="fas fa-inbox text-6xl text-slate-300"></i>
-        <h3 class="text-xl font-bold text-slate-900 mt-4">Nenhum produto encontrado</h3>
-        <p class="text-slate-500">Tente ajustar os filtros ou a busca.</p>
+      <!-- NO RESULTS STATE -->
+      <div id="noResultsState" class="hidden text-center py-20">
+        <div class="mb-6">
+          <i class="fas fa-inbox text-6xl text-slate-300"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Nenhum produto encontrado</h3>
+        <p class="text-slate-500">Tente ajustar seus filtros ou buscar por outro termo.</p>
       </div>
+
     </div>
 
-  </main>
+  <!-- Botão flutuante do carrinho (abre o drawer) -->
+  <button id="btnCart" aria-label="Abrir sacola" class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-emerald-600 text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform">
+    <i class="fas fa-shopping-bag"></i>
+    <span id="cartBadge" class="absolute -top-2 -right-2 bg-rose-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center hidden"> 
+      <span id="cartBadgeCount">0</span>
+    </span>
+  </button>
 
-  <!-- ===== BOTÃO FLUTUANTE DO CARRINHO ===== -->
-  <div class="fixed bottom-6 right-6 z-40">
-    <button id="btnCart" class="relative w-14 h-14 rounded-full bg-[#6C5CE7] text-white shadow-lg shadow-[#6C5CE7]/30 hover:bg-[#4834D4] active:scale-95 transition-all flex items-center justify-center text-xl">
-      <i class="fas fa-shopping-bag"></i>
-      <span id="cartBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">0</span>
-    </button>
-  </div>
-
-  <!-- ===== DRAWER DO CARRINHO ===== -->
+  <!-- ═══ FLOATING CART DRAWER ═══ -->
   <div id="cartDrawer" class="hidden fixed inset-0 z-50">
-    <!-- Backdrop -->
-    <div id="cartBackdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-    <!-- Painel -->
-    <div class="drawer-panel">
-      <!-- Header -->
-      <div class="drawer-header">
-        <h2 class="text-lg font-bold flex items-center gap-2">
-          <i class="fas fa-shopping-bag text-[#6C5CE7]"></i> Sacola
-          <span id="cartBadgeCount" class="bg-[#6C5CE7]/10 text-[#6C5CE7] text-xs font-bold px-2 py-0.5 rounded-full">0</span>
-        </h2>
-        <button id="closeCartDrawer" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fas fa-times"></i></button>
+    <div id="cartBackdrop" class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-smooth"></div>
+
+    <div class="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl flex flex-col transform transition-smooth duration-300">
+      <div class="flex items-center justify-between p-6 border-b border-slate-200">
+        <h2 class="text-xl font-bold text-slate-900">Sua Sacola</h2>
+        <button id="closeCartDrawer" class="text-slate-400 hover:text-slate-600 transition-smooth" aria-label="Fechar carrinho">
+          <i class="fas fa-times text-xl"></i>
+        </button>
       </div>
 
-      <!-- Itens -->
-      <div id="cartItemsContainer" class="drawer-items space-y-2">
-        <!-- renderizado via JS -->
-      </div>
+      <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+
       <div id="emptyCartMessage" class="hidden flex-1 flex items-center justify-center text-center px-6">
         <div>
           <i class="fas fa-shopping-bag text-5xl text-slate-300 mb-4 block"></i>
           <p class="text-slate-500 font-semibold">Sua sacola está vazia</p>
-          <p class="text-xs text-slate-400 mt-1">Adicione produtos para começar</p>
+          <p class="text-xs text-slate-400 mt-2">Adicione produtos para começar a comprar</p>
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="drawer-footer space-y-3">
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600">Subtotal:</span>
-          <span id="cartSubtotal" class="font-bold text-slate-900">R$ 0,00</span>
+      <div class="border-t border-slate-200 p-6 space-y-4">
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-600">Subtotal:</span>
+            <span id="cartSubtotal" class="font-bold text-slate-900">R$ 0,00</span>
+          </div>
         </div>
-        <div class="flex flex-col gap-2">
-          <button id="continuShoppingBtn" class="w-full py-3 rounded-full bg-slate-50 border border-slate-200 font-semibold text-sm hover:bg-slate-100 transition">Continuar comprando</button>
-          <button id="confirmOrderBtn" class="w-full py-3 rounded-full bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 active:scale-95 transition">Enviar pedido (WhatsApp)</button>
+
+        <div class="flex items-center gap-3">
+          <button id="continuShoppingBtn" class="flex-1 px-4 py-3 rounded-full bg-slate-50 border border-slate-200 font-semibold">Continuar comprando</button>
+          <button id="confirmOrderBtn" class="flex-1 px-4 py-3 rounded-full bg-emerald-600 text-white font-bold">Enviar pedido (WhatsApp)</button>
         </div>
       </div>
+
     </div>
   </div>
-
-  <!-- ===== JAVASCRIPT ===== -->
-  <script src="catalogo.js"></script>
 
 </body>
 </html>
