@@ -105,6 +105,11 @@
     .product-description { width: 100%; margin: 0 0 10px; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .product-footer { width: 100%; margin-top: auto; }
     .product-price { display: block; margin-bottom: 9px; color: #101828; font-size: 18px; font-weight: 850; letter-spacing: -.03em; }
+    .variation-group { width: 100%; margin: 0 0 11px; }
+    .variation-title { display: block; margin: 0 0 7px; color: var(--muted); font-size: 11px; font-weight: 850; text-transform: uppercase; }
+    .variation-options { display: flex; flex-wrap: wrap; gap: 7px; }
+    .variation-chip { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; color: #475467; background: #fff; font-size: 12px; font-weight: 750; cursor: pointer; }
+    .variation-chip.active { border-color: var(--theme); color: #fff; background: var(--theme); box-shadow: 0 5px 12px color-mix(in srgb, var(--theme) 24%, transparent); }
     .buy-button { width: 100%; min-height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12px; }
     .buy-button .icon { width: 17px; height: 17px; }
     .product-actions { display: grid; gap: 8px; }
@@ -284,11 +289,18 @@
       elements.cartButton.setAttribute("aria-label", `Abrir carrinho, ${total} ${total === 1 ? "item" : "itens"}`);
     }
     function mostrarToast(mensagem) { elements.toast.textContent = mensagem; elements.toast.hidden = false; clearTimeout(mostrarToast.timer); mostrarToast.timer = setTimeout(() => { elements.toast.hidden = true; }, 2200); }
-    function adicionarAoCarrinho(produto) {
-      const id = String(produto.id ?? produto.codigo ?? produto.nome);
+    function obterVariacoes(produto) {
+      return String(produto.variacoes || "")
+        .split(",")
+        .map(opcao => opcao.trim())
+        .filter(Boolean);
+    }
+    function adicionarAoCarrinho(produto, variacao = "") {
+      const baseId = String(produto.id ?? produto.codigo ?? produto.nome);
+      const id = variacao ? `${baseId}::${variacao}` : baseId;
       const existente = state.carrinho.find(item => item.id === id);
       if (existente) existente.quantidade += 1;
-      else state.carrinho.push({ id, nome: produto.nome || "Produto", preco: Number(produto.preco) || 0, imagem_url: obterImagem(produto), quantidade: 1 });
+      else state.carrinho.push({ id, produto_id: baseId, nome: produto.nome || "Produto", preco: Number(produto.preco) || 0, imagem_url: obterImagem(produto), variacao, quantidade: 1 });
       salvarCarrinho(); mostrarToast(`${produto.nome || "Produto"} adicionado ao carrinho`);
     }
     function abrirCarrinho() { window.location.href = `/c/${encodeURIComponent(state.slug)}/carrinho`; }
@@ -351,9 +363,14 @@
       card.className = "product-card";
       const nome = produto.nome || "Produto";
       const imagem = obterImagem(produto);
+      const variacoes = obterVariacoes(produto);
+      let variacaoSelecionada = "";
       const midia = imagem
         ? `<img src="${escaparHTML(imagem)}" alt="${escaparHTML(nome)}" loading="lazy" decoding="async">`
         : `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`;
+      const variacoesHTML = variacoes.length
+        ? `<div class="variation-group"><span class="variation-title">Escolha uma opção</span><div class="variation-options">${variacoes.map(opcao => `<button class="variation-chip" type="button" data-variation="${escaparHTML(opcao)}" aria-pressed="false">${escaparHTML(opcao)}</button>`).join("")}</div></div>`
+        : "";
       card.innerHTML = `
         <div class="product-image">${midia}</div>
         <div class="product-body">
@@ -361,11 +378,28 @@
           <h3 class="product-name">${escaparHTML(nome)}</h3>
           ${produto.descricao ? `<p class="product-description">${escaparHTML(produto.descricao)}</p>` : ""}
           <div class="product-footer">
+            ${variacoesHTML}
             <strong class="product-price">${formatarPreco(produto.preco)}</strong>
             <div class="product-actions"><button class="add-cart-button" type="button">Adicionar ao carrinho</button><button class="buy-button" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar agora</button></div>
           </div>`;
-      card.querySelector(".buy-button").addEventListener("click", () => abrirWhatsApp(nome));
-      card.querySelector(".add-cart-button").addEventListener("click", () => adicionarAoCarrinho(produto));
+      card.querySelectorAll(".variation-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          variacaoSelecionada = chip.dataset.variation || "";
+          card.querySelectorAll(".variation-chip").forEach(item => {
+            const ativo = item === chip;
+            item.classList.toggle("active", ativo);
+            item.setAttribute("aria-pressed", String(ativo));
+          });
+        });
+      });
+      card.querySelector(".buy-button").addEventListener("click", () => {
+        if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de comprar."); return; }
+        abrirWhatsApp(nome, variacaoSelecionada);
+      });
+      card.querySelector(".add-cart-button").addEventListener("click", () => {
+        if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de adicionar ao carrinho."); return; }
+        adicionarAoCarrinho(produto, variacaoSelecionada);
+      });
       const img = card.querySelector("img");
       img?.addEventListener("error", () => { img.parentElement.innerHTML = `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`; }, { once: true });
       return card;
@@ -376,7 +410,7 @@
       const filtrados = state.produtos.filter(produto => {
         const categoria = String(produto.categoria || "Geral");
         const correspondeCategoria = state.categoria === "todos" || categoria === state.categoria;
-        const texto = `${produto.nome || ""} ${produto.descricao || ""} ${categoria}`.toLocaleLowerCase("pt-BR");
+        const texto = `${produto.nome || ""} ${produto.descricao || ""} ${categoria} ${produto.variacoes || ""}`.toLocaleLowerCase("pt-BR");
         const preco = Number(produto.preco) || 0;
         return correspondeCategoria && (!termo || texto.includes(termo)) && (state.precoMin === null || preco >= state.precoMin) && (state.precoMax === null || preco <= state.precoMax);
       });
@@ -413,10 +447,10 @@
       });
     }
 
-    function abrirWhatsApp(produtoNome = "") {
+    function abrirWhatsApp(produtoNome = "", variacao = "") {
       const numero = String(state.loja?.whatsapp || "").replace(/\D/g, "");
       if (!numero) return;
-      const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
+      const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao}` : ""}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
       window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener,noreferrer");
     }
 
