@@ -413,15 +413,11 @@
       line-height: 1.45;
     }
     .sheet-table-wrap {
-      display: none;
       margin-top: 10px;
       overflow-x: auto;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       background: #fff;
-    }
-    .sheet-model-card.is-open .sheet-table-wrap {
-      display: block;
     }
     .sheet-table {
       width: 100%;
@@ -456,6 +452,10 @@
       font-size: 0.72rem;
       font-weight: 800;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
       transition: transform 0.2s ease, background 0.2s ease;
     }
     .sheet-action:hover {
@@ -565,7 +565,7 @@
             <span class="sheet-column">Nome do Produto</span><span class="sheet-column">Preço</span><span class="sheet-column">Descrição</span><span class="sheet-column">Categoria</span>
           </div>
           <p class="sheet-example">Copo da Felicidade | 12,00 | Copo 200ml recheado | Sobremesas</p>
-          <button type="button" class="sheet-action" data-template="simples" aria-expanded="false"><i class="fas fa-eye mr-1.5"></i>Ver modelo simples</button>
+          <a class="sheet-action" href="/modelos/modelo-simples.xlsx" download="modelo-simples.xlsx"><i class="fas fa-download mr-1.5"></i>Baixar modelo simples</a>
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th></tr></thead>
@@ -579,7 +579,7 @@
             <span class="sheet-column">Nome do Produto</span><span class="sheet-column">Preço</span><span class="sheet-column">Descrição</span><span class="sheet-column">Categoria</span><span class="sheet-column">Variações</span>
           </div>
           <p class="sheet-example">Bolo Personalizado | 85,00 | Massa branca ou cacau 50% | Bolos | 10cm, 15cm, 20cm</p>
-          <button type="button" class="sheet-action" data-template="variacoes" aria-expanded="false"><i class="fas fa-eye mr-1.5"></i>Ver modelo com variações</button>
+          <a class="sheet-action" href="/modelos/modelo-variacoes.xlsx" download="modelo-variacoes.xlsx"><i class="fas fa-download mr-1.5"></i>Baixar modelo com variações</a>
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
@@ -593,7 +593,7 @@
             <span class="sheet-column">Código</span><span class="sheet-column">Nome do Produto</span><span class="sheet-column">Preço</span><span class="sheet-column">Descrição</span><span class="sheet-column">Categoria</span><span class="sheet-column">Variações</span>
           </div>
           <p class="sheet-example">CAM-001 | Camiseta Polo | 89,90 | Malha piquet | Camisetas | P, M, G</p>
-          <button type="button" class="sheet-action" data-template="completo" aria-expanded="false"><i class="fas fa-eye mr-1.5"></i>Ver modelo completo</button>
+          <a class="sheet-action" href="/modelos/modelo-completo.xlsx" download="modelo-completo.xlsx"><i class="fas fa-download mr-1.5"></i>Baixar modelo completo</a>
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Código</th><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
@@ -1343,15 +1343,6 @@
       var sheetRemove       = $('sheetRemove');
       var sheetDragCounter  = 0;
 
-      document.querySelectorAll('[data-template]').forEach(function (button) {
-        safeAddEventListener(button, 'click', function () {
-          var card = button.closest('.sheet-model-card');
-          if (!card) return;
-          var isOpen = card.classList.toggle('is-open');
-          button.setAttribute('aria-expanded', String(isOpen));
-        });
-      });
-
       safeAddEventListener(sheetDropzone, 'click', function (e) {
         if (e.target === sheetRemove || sheetRemove.contains(e.target)) return;
         sheetInput.click();
@@ -1486,7 +1477,7 @@
         setOnboardingStep(3);
       }
 
-      function renderImportedProducts(produtos, apiUrl) {
+      function renderImportedProducts(produtos, apiUrl, editToken) {
         importedProductsList.replaceChildren();
 
         if (!produtos.length) {
@@ -1554,6 +1545,7 @@
             try {
               var imageForm = new FormData();
               imageForm.append('imagem', file);
+              imageForm.append('edit_token', editToken);
               var response = await fetchWithTimeout(apiUrl + '/api/produtos/' + encodeURIComponent(produto.id) + '/imagem', {
                 method: 'POST',
                 body: imageForm
@@ -1672,6 +1664,7 @@
 
         var catalogId = onboardingRes.catalogo.id;
         var slug = onboardingRes.catalogo.slug;
+        var editToken = onboardingRes.edit_token || onboardingRes.catalogo.edit_token;
 
         // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL ───
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importando produtos...';
@@ -1679,6 +1672,7 @@
           var productsForm = new FormData();
           productsForm.append('file', sheetData.file);
           productsForm.append('catalogId', catalogId);
+          productsForm.append('edit_token', editToken);
           var productsResponse = await fetchWithTimeout(apiUrl + '/api/produtos/upload', {
             method: 'POST',
             body: productsForm
@@ -1686,7 +1680,7 @@
           var productsBody = await productsResponse.json().catch(function () { return {}; });
           if (!productsResponse.ok) throw new Error(productsBody.error || 'Falha ao importar produtos.');
 
-          renderImportedProducts(productsBody.produtos || [], apiUrl);
+          renderImportedProducts(productsBody.produtos || [], apiUrl, editToken);
           var catalogPath = '/c/' + encodeURIComponent(slug);
           var catalogUrl = new URL(catalogPath, window.location.origin).href;
           openCatalogButton.href = catalogPath;
