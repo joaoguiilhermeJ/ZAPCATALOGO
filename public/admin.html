@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" id="themeMeta" content="#6c5ce7">
+  <title>Editar catalogo - ZapCatalogo</title>
+  <style>
+    :root { --theme:#6c5ce7; --theme-dark:#4736b0; --theme-soft:#f0edff; --ink:#172033; --muted:#667085; --line:#e6e9ef; --bg:#f6f7fb; --ok:#16a34a; --danger:#dc2626; --shadow:0 12px 38px rgba(16,24,40,.1); }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, textarea { font:inherit; }
+    button { border:0; cursor:pointer; }
+    .shell { min-height:100vh; }
+    .topbar { padding:max(22px, env(safe-area-inset-top)) 18px 24px; color:#fff; background:linear-gradient(145deg,var(--theme),var(--theme-dark)); border-radius:0 0 26px 26px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .avatar { width:52px; height:52px; flex:0 0 auto; display:grid; place-items:center; overflow:hidden; border:2px solid rgba(255,255,255,.45); border-radius:16px; background:rgba(255,255,255,.18); font-size:22px; font-weight:900; }
+    .avatar img { width:100%; height:100%; object-fit:cover; }
+    h1 { margin:0; font-size:22px; line-height:1.15; letter-spacing:0; }
+    .subtitle { margin:5px 0 0; color:rgba(255,255,255,.78); font-size:13px; }
+    .public-link { margin-top:18px; padding:12px; border:1px solid rgba(255,255,255,.26); border-radius:16px; background:rgba(255,255,255,.13); }
+    .public-link label { display:block; margin-bottom:7px; color:rgba(255,255,255,.75); font-size:11px; font-weight:850; text-transform:uppercase; }
+    .link-row { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; }
+    .link-text { min-width:0; overflow:hidden; color:#fff; font-size:13px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+    .main { padding:18px 14px 42px; }
+    .section { margin-bottom:16px; padding:16px; border:1px solid var(--line); border-radius:20px; background:#fff; box-shadow:0 6px 22px rgba(16,24,40,.055); }
+    .section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    h2 { margin:0; font-size:17px; line-height:1.2; letter-spacing:0; }
+    .count { color:var(--muted); font-size:12px; font-weight:800; }
+    .grid { display:grid; gap:12px; }
+    .field { display:grid; gap:6px; min-width:0; }
+    .field label { color:var(--muted); font-size:11px; font-weight:850; text-transform:uppercase; }
+    .input, .textarea { width:100%; min-width:0; border:1px solid var(--line); border-radius:12px; color:var(--ink); background:#f9fafb; outline:0; }
+    .input { height:44px; padding:0 12px; }
+    .textarea { min-height:78px; padding:11px 12px; resize:vertical; }
+    .input:focus, .textarea:focus { border-color:var(--theme); box-shadow:0 0 0 3px var(--theme-soft); background:#fff; }
+    .color-row { display:grid; grid-template-columns:54px 1fr; gap:10px; align-items:center; }
+    input[type="color"] { width:54px; height:44px; padding:3px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
+    .btn { min-height:42px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; gap:7px; border-radius:12px; color:var(--theme-dark); background:var(--theme-soft); font-size:13px; font-weight:850; text-decoration:none; }
+    .btn.primary { color:#fff; background:var(--theme); }
+    .btn.success { color:#fff; background:var(--ok); }
+    .btn.danger { color:#fff; background:var(--danger); }
+    .btn.neutral { color:#344054; background:#eef1f6; }
+    .btn:disabled { opacity:.62; cursor:not-allowed; }
+    .products { display:grid; gap:12px; }
+    .product { overflow:hidden; border:1px solid var(--line); border-radius:18px; background:#fff; }
+    .product.inactive { opacity:.68; }
+    .product-media { height:168px; display:grid; place-items:center; overflow:hidden; color:var(--muted); background:#f0f2f6; }
+    .product-media img { width:100%; height:100%; object-fit:cover; }
+    .product-body { padding:14px; }
+    .product-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+    .status { flex:0 0 auto; padding:5px 8px; border-radius:999px; font-size:11px; font-weight:900; }
+    .status.on { color:#047857; background:#dcfce7; }
+    .status.off { color:#991b1b; background:#fee2e2; }
+    .image-row { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-top:10px; }
+    .file-input { min-width:0; width:100%; font-size:12px; }
+    .state { min-height:70vh; padding:44px 18px; display:grid; place-items:center; text-align:center; }
+    .state-card { width:min(100%,420px); padding:28px 20px; border:1px solid var(--line); border-radius:22px; background:#fff; box-shadow:var(--shadow); }
+    .state-card h2 { font-size:20px; }
+    .state-card p { margin:9px 0 0; color:var(--muted); font-size:14px; line-height:1.45; }
+    .spinner { width:34px; height:34px; margin:0 auto 16px; border:3px solid #e5e7eb; border-top-color:var(--theme); border-radius:50%; animation:spin .8s linear infinite; }
+    .toast { position:fixed; z-index:30; left:50%; bottom:24px; width:max-content; max-width:calc(100% - 28px); padding:12px 15px; border-radius:13px; color:#fff; background:#18212f; box-shadow:var(--shadow); font-size:13px; font-weight:800; transform:translateX(-50%); }
+    .toast.error { background:#991b1b; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @media (min-width:760px) {
+      body { padding:24px 18px; }
+      .shell { max-width:1040px; margin:0 auto; overflow:hidden; border-radius:30px; box-shadow:0 16px 60px rgba(16,24,40,.12); }
+      .topbar { padding:30px 34px; border-radius:0 0 30px 30px; }
+      .topbar-inner { display:grid; grid-template-columns:1fr minmax(320px,460px); gap:24px; align-items:center; }
+      .main { padding:26px 34px 54px; }
+      .grid.two { grid-template-columns:1fr 1fr; }
+      .products { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .product-media { height:190px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingState" class="state"><div class="state-card"><div class="spinner"></div><h2>Carregando painel</h2><p>Validando o link de edicao da loja.</p></div></div>
+  <div id="errorState" class="state" hidden><div class="state-card"><h2>Link invalido</h2><p id="errorMessage">Confira se o token de edicao esta correto.</p></div></div>
+
+  <div id="contentState" class="shell" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div id="storeAvatar" class="avatar">L</div>
+          <div>
+            <h1 id="storeName">Minha loja</h1>
+            <p class="subtitle">Painel de edicao do catalogo</p>
+          </div>
+        </div>
+        <div class="public-link">
+          <label>Link publico do catalogo</label>
+          <div class="link-row">
+            <span id="publicUrl" class="link-text"></span>
+            <button id="copyLink" class="btn neutral" type="button">Copiar</button>
+          </div>
+          <div class="actions">
+            <a id="openCatalog" class="btn primary" href="#" target="_blank" rel="noopener noreferrer">Abrir catalogo</a>
+            <button id="reloadPanel" class="btn" type="button">Recarregar</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="section">
+        <div class="section-head"><h2>Informacoes da loja</h2></div>
+        <form id="storeForm" class="grid">
+          <div class="grid two">
+            <div class="field"><label for="storeNameInput">Nome</label><input id="storeNameInput" class="input" name="nome_loja" required></div>
+            <div class="field"><label for="storeWhatsappInput">WhatsApp</label><input id="storeWhatsappInput" class="input" name="whatsapp" inputmode="tel"></div>
+          </div>
+          <div class="field">
+            <label for="storeLogoInput">Logo URL</label>
+            <input id="storeLogoInput" class="input" name="logo_url" placeholder="https://...">
+          </div>
+          <div class="field">
+            <label for="storeColorInput">Cor da loja</label>
+            <div class="color-row"><input id="storeColorInput" name="cor_tema" type="color" value="#6c5ce7"><input id="storeColorText" class="input" inputmode="text" value="#6c5ce7"></div>
+          </div>
+          <button class="btn primary" type="submit">Salvar alteracoes</button>
+        </form>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2>Produtos</h2><span id="productCount" class="count">0 produtos</span></div>
+        <div id="products" class="products"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script>
+    "use strict";
+    const DEFAULT_THEME = "#6c5ce7";
+    const API_ORIGIN = (() => {
+      const configured = window.API_BASE_URL || window.API_URL || "https://zapcatalogobackend-kg0c.onrender.com";
+      if (["localhost", "127.0.0.1"].includes(location.hostname)) return "";
+      return configured.replace(/\/$/, "").replace(/\/api$/, "");
+    })();
+    const state = { slug: "", token: "", catalogo: null, produtos: [] };
+    const el = {
+      loading: document.getElementById("loadingState"), error: document.getElementById("errorState"), content: document.getElementById("contentState"),
+      errorMessage: document.getElementById("errorMessage"), avatar: document.getElementById("storeAvatar"), storeName: document.getElementById("storeName"),
+      publicUrl: document.getElementById("publicUrl"), copyLink: document.getElementById("copyLink"), openCatalog: document.getElementById("openCatalog"), reload: document.getElementById("reloadPanel"),
+      storeForm: document.getElementById("storeForm"), nameInput: document.getElementById("storeNameInput"), whatsappInput: document.getElementById("storeWhatsappInput"),
+      logoInput: document.getElementById("storeLogoInput"), colorInput: document.getElementById("storeColorInput"), colorText: document.getElementById("storeColorText"),
+      products: document.getElementById("products"), productCount: document.getElementById("productCount"), toast: document.getElementById("toast")
+    };
+
+    function obterSlug() {
+      const partes = location.pathname.split("/").filter(Boolean);
+      return partes[0] === "admin" ? partes[1] || "" : new URLSearchParams(location.search).get("slug") || "";
+    }
+    function escaparHTML(valor) { const node = document.createElement("div"); node.textContent = String(valor ?? ""); return node.innerHTML; }
+    function normalizarCor(cor) { return /^#[0-9a-f]{6}$/i.test(cor || "") ? cor : DEFAULT_THEME; }
+    function ajustarCor(hex, quantidade) {
+      const numero = parseInt(hex.slice(1), 16);
+      const canal = deslocamento => Math.max(0, Math.min(255, ((numero >> deslocamento) & 255) + quantidade));
+      return `#${[canal(16), canal(8), canal(0)].map(v => v.toString(16).padStart(2, "0")).join("")}`;
+    }
+    function aplicarTema(corTema) {
+      const cor = normalizarCor(corTema);
+      document.documentElement.style.setProperty("--theme", cor);
+      document.documentElement.style.setProperty("--theme-dark", ajustarCor(cor, -42));
+      document.documentElement.style.setProperty("--theme-soft", `${cor}18`);
+      document.getElementById("themeMeta").content = cor;
+    }
+    function mostrarEstado(nome, mensagem = "") {
+      el.loading.hidden = nome !== "loading";
+      el.error.hidden = nome !== "error";
+      el.content.hidden = nome !== "content";
+      if (mensagem) el.errorMessage.textContent = mensagem;
+    }
+    function mostrarToast(mensagem, tipo = "success") {
+      el.toast.textContent = mensagem;
+      el.toast.classList.toggle("error", tipo === "error");
+      el.toast.hidden = false;
+      clearTimeout(mostrarToast.timer);
+      mostrarToast.timer = setTimeout(() => { el.toast.hidden = true; }, 2600);
+    }
+    async function api(path, options = {}) {
+      const join = path.includes("?") ? "&" : "?";
+      const resposta = await fetch(`${API_ORIGIN}${path}${join}token=${encodeURIComponent(state.token)}`, {
+        ...options,
+        headers: options.body instanceof FormData ? options.headers : { "Content-Type": "application/json", Accept: "application/json", ...(options.headers || {}) },
+      });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || dados.success === false) throw new Error(dados.error || dados.message || `Erro ${resposta.status}`);
+      return dados;
+    }
+    function renderizarLoja() {
+      const loja = state.catalogo;
+      aplicarTema(loja.cor_tema);
+      el.storeName.textContent = loja.nome_loja || "Minha loja";
+      document.title = `Editar - ${loja.nome_loja || "Catalogo"}`;
+      el.avatar.replaceChildren();
+      if (loja.logo_url) {
+        const img = new Image();
+        img.src = loja.logo_url;
+        img.alt = `Logo de ${loja.nome_loja || "loja"}`;
+        img.addEventListener("error", () => { el.avatar.textContent = (loja.nome_loja || "L").trim().charAt(0) || "L"; }, { once: true });
+        el.avatar.appendChild(img);
+      } else {
+        el.avatar.textContent = (loja.nome_loja || "L").trim().charAt(0) || "L";
+      }
+      el.publicUrl.textContent = loja.catalogo_url;
+      el.openCatalog.href = loja.catalogo_url;
+      el.nameInput.value = loja.nome_loja || "";
+      el.whatsappInput.value = loja.whatsapp || "";
+      el.logoInput.value = loja.logo_url || "";
+      el.colorInput.value = normalizarCor(loja.cor_tema);
+      el.colorText.value = normalizarCor(loja.cor_tema);
+    }
+    function productImage(produto) {
+      return produto.imagem_url ? `<img src="${escaparHTML(produto.imagem_url)}" alt="${escaparHTML(produto.nome || "Produto")}">` : "Sem imagem";
+    }
+    function renderizarProdutos() {
+      el.productCount.textContent = `${state.produtos.length} ${state.produtos.length === 1 ? "produto" : "produtos"}`;
+      el.products.replaceChildren(...state.produtos.map(produto => {
+        const card = document.createElement("article");
+        card.className = `product${produto.ativo === false ? " inactive" : ""}`;
+        card.innerHTML = `
+          <div class="product-media">${productImage(produto)}</div>
+          <div class="product-body">
+            <div class="product-title"><strong>${escaparHTML(produto.nome || "Produto")}</strong><span class="status ${produto.ativo === false ? "off" : "on"}">${produto.ativo === false ? "Oculto" : "Visivel"}</span></div>
+            <form class="grid product-form">
+              <div class="field"><label>Nome</label><input class="input" name="nome" value="${escaparHTML(produto.nome || "")}" required></div>
+              <div class="grid two">
+                <div class="field"><label>Preco</label><input class="input" name="preco" inputmode="decimal" value="${escaparHTML(produto.preco || "")}"></div>
+                <div class="field"><label>Categoria</label><input class="input" name="categoria" value="${escaparHTML(produto.categoria || "")}"></div>
+              </div>
+              <div class="field"><label>Descricao</label><textarea class="textarea" name="descricao">${escaparHTML(produto.descricao || "")}</textarea></div>
+              <div class="field"><label>Variacoes</label><textarea class="textarea" name="variacoes" placeholder="Supremo Morango:12, Supremo Nutella:14,50">${escaparHTML(produto.variacoes || "")}</textarea></div>
+              <div class="field"><label>Imagem URL</label><input class="input" name="imagem_url" value="${escaparHTML(produto.imagem_url || "")}"></div>
+              <button class="btn primary" type="submit">Salvar produto</button>
+            </form>
+            <div class="image-row">
+              <input class="file-input" type="file" accept="image/jpeg,image/png,image/webp">
+              <button class="btn neutral upload-image" type="button">Trocar imagem</button>
+            </div>
+            <div class="actions">
+              <button class="btn ${produto.ativo === false ? "success" : "danger"} toggle-active" type="button">${produto.ativo === false ? "Mostrar produto" : "Ocultar produto"}</button>
+              <button class="btn neutral reload-product" type="button">Reverter</button>
+            </div>
+          </div>`;
+        const form = card.querySelector(".product-form");
+        form.addEventListener("submit", event => salvarProduto(event, produto.id));
+        card.querySelector(".toggle-active").addEventListener("click", () => alterarAtivo(produto.id, produto.ativo === false));
+        card.querySelector(".upload-image").addEventListener("click", () => trocarImagem(card, produto.id));
+        card.querySelector(".reload-product").addEventListener("click", carregarPainel);
+        return card;
+      }));
+    }
+    async function carregarPainel() {
+      mostrarEstado("loading");
+      try {
+        const dados = await api(`/api/admin/catalogos/${encodeURIComponent(state.slug)}`);
+        state.catalogo = dados.catalogo;
+        state.produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        renderizarLoja();
+        renderizarProdutos();
+        mostrarEstado("content");
+      } catch (erro) {
+        console.error("Erro no painel:", erro);
+        mostrarEstado("error", erro.message || "Token invalido ou expirado.");
+      }
+    }
+    async function salvarLoja(event) {
+      event.preventDefault();
+      const button = el.storeForm.querySelector("button[type=submit]");
+      button.disabled = true;
+      try {
+        const payload = {
+          nome_loja: el.nameInput.value.trim(),
+          whatsapp: el.whatsappInput.value.trim(),
+          cor_tema: normalizarCor(el.colorText.value || el.colorInput.value),
+          logo_url: el.logoInput.value.trim(),
+        };
+        const dados = await api(`/api/admin/catalogos/${encodeURIComponent(state.slug)}`, { method: "PUT", body: JSON.stringify(payload) });
+        state.catalogo = dados.catalogo;
+        renderizarLoja();
+        mostrarToast("Loja atualizada");
+      } catch (erro) {
+        mostrarToast(erro.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+    async function salvarProduto(event, id) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const button = form.querySelector("button[type=submit]");
+      button.disabled = true;
+      try {
+        const data = new FormData(form);
+        const payload = Object.fromEntries(data.entries());
+        const dados = await api(`/api/admin/produtos/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(payload) });
+        state.produtos = state.produtos.map(produto => produto.id === id ? dados.produto : produto);
+        renderizarProdutos();
+        mostrarToast("Produto salvo");
+      } catch (erro) {
+        mostrarToast(erro.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+    async function alterarAtivo(id, ativo) {
+      try {
+        const dados = await api(`/api/admin/produtos/${encodeURIComponent(id)}/ativo`, { method: "PATCH", body: JSON.stringify({ ativo }) });
+        state.produtos = state.produtos.map(produto => produto.id === id ? dados.produto : produto);
+        renderizarProdutos();
+        mostrarToast(ativo ? "Produto visivel no catalogo" : "Produto ocultado");
+      } catch (erro) {
+        mostrarToast(erro.message, "error");
+      }
+    }
+    async function trocarImagem(card, id) {
+      const input = card.querySelector(".file-input");
+      if (!input.files?.[0]) { mostrarToast("Escolha uma imagem primeiro", "error"); return; }
+      const formData = new FormData();
+      formData.append("imagem", input.files[0]);
+      try {
+        const dados = await api(`/api/admin/produtos/${encodeURIComponent(id)}/imagem`, { method: "PATCH", body: formData });
+        state.produtos = state.produtos.map(produto => produto.id === id ? dados.produto : produto);
+        renderizarProdutos();
+        mostrarToast("Imagem atualizada");
+      } catch (erro) {
+        mostrarToast(erro.message, "error");
+      }
+    }
+
+    el.storeForm.addEventListener("submit", salvarLoja);
+    el.reload.addEventListener("click", carregarPainel);
+    el.copyLink.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(state.catalogo.catalogo_url);
+        mostrarToast("Link copiado");
+      } catch {
+        mostrarToast("Nao foi possivel copiar", "error");
+      }
+    });
+    el.colorInput.addEventListener("input", event => { el.colorText.value = event.target.value; aplicarTema(event.target.value); });
+    el.colorText.addEventListener("input", event => { if (/^#[0-9a-f]{6}$/i.test(event.target.value)) { el.colorInput.value = event.target.value; aplicarTema(event.target.value); } });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      state.slug = obterSlug();
+      state.token = new URLSearchParams(location.search).get("token") || "";
+      if (!state.slug || !state.token) {
+        mostrarEstado("error", "Este painel precisa de slug e token de edicao.");
+        return;
+      }
+      carregarPainel();
+    });
+  </script>
+</body>
+</html>

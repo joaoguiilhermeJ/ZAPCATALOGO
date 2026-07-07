@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://zapcatalogobackend-kg0c.onrender.com/api/:path*"
+    },
+    {
+      "source": "/admin/:slug",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/:slug/",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/c/:slug/carrinho",
       "destination": "/carrinho.html"
     },
