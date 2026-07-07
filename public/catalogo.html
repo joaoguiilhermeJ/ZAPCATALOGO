@@ -96,9 +96,13 @@
     .product-count { color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
     .products-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     .product-card { overflow: hidden; display: grid; grid-template-columns: 124px 1fr; min-height: 180px; border: 1px solid rgba(231,233,238,.9); border-radius: 20px; background: var(--surface); box-shadow: 0 6px 22px rgba(16,24,40,.065); }
-    .product-image { position: relative; min-height: 180px; aspect-ratio: 1 / 1.45; display: grid; place-items: center; overflow: hidden; color: var(--theme); background: linear-gradient(145deg, var(--theme-soft), #f8f8fa); }
-    .product-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
-    .product-placeholder { width: 50px; height: 50px; opacity: .72; }
+    .product-card.has-image { display: flex; flex-direction: column; }
+    .product-image { position: relative; width: 100%; min-height: 180px; aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; color: var(--theme); background: linear-gradient(145deg, var(--theme-soft), #f8f8fa); }
+    .product-card.has-image .product-image { border-radius: 20px 20px 0 0; }
+    .product-image.loading::before { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(233,235,239,.9) 20%, rgba(248,248,250,.95) 40%, rgba(233,235,239,.9) 60%); background-size: 220% 100%; animation: shimmer 1.35s infinite linear; }
+    .product-image img { position: relative; z-index: 1; width: 100%; height: 100%; max-width: 100%; object-fit: cover; object-position: center; }
+    .product-image.is-placeholder { min-height: 180px; background: linear-gradient(145deg, var(--theme-soft), #f8f8fa); }
+    .product-placeholder { width: 54px; height: 54px; opacity: .72; filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--theme) 18%, transparent)); }
     .product-body { min-width: 0; padding: 14px 13px; display: flex; flex-direction: column; align-items: flex-start; }
     .category-badge { max-width: 100%; margin-bottom: 7px; padding: 4px 8px; overflow: hidden; border-radius: 999px; color: var(--theme-dark); background: var(--theme-soft); font-size: 10px; line-height: 1.2; font-weight: 800; letter-spacing: .045em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
     .product-name { width: 100%; margin: 0 0 5px; overflow: hidden; font-size: 16px; line-height: 1.25; font-weight: 800; letter-spacing: -.015em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -148,7 +152,7 @@
       .categories { margin-left: -22px; margin-right: -22px; padding-left: 22px; padding-right: 22px; }
       .products-grid, .skeleton-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .product-card { display: flex; flex-direction: column; min-height: 410px; }
-      .product-image { width: 100%; min-height: 0; height: auto; aspect-ratio: 4 / 3; }
+      .product-image { min-height: 0; height: auto; aspect-ratio: 4 / 3; }
       .product-body { flex: 1; padding: 16px; }
       .product-description { font-size: 13px; }
       .buy-button { min-height: 46px; font-size: 13px; }
@@ -276,6 +280,18 @@
       return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor) || 0);
     }
 
+    function normalizarWhatsApp(numero) {
+      let digits = String(numero || "").replace(/\D/g, "");
+      if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return digits;
+      if (digits.length === 11) return `55${digits}`;
+      if (digits.length === 10) return `55${digits.slice(0, 2)}9${digits.slice(2)}`;
+      return digits;
+    }
+
+    function whatsappValido(numero) {
+      return /^55\d{2}9\d{8}$/.test(numero);
+    }
+
     function chaveCarrinho() { return `zapcatalogo:carrinho:${state.slug}`; }
     function carregarCarrinho() {
       try { const salvo = JSON.parse(localStorage.getItem(chaveCarrinho()) || "[]"); state.carrinho = Array.isArray(salvo) ? salvo : []; } catch { state.carrinho = []; }
@@ -349,7 +365,7 @@
       } else {
         elements.avatar.textContent = nome.trim().charAt(0) || "L";
       }
-      const possuiWhatsApp = Boolean(String(state.loja.whatsapp || "").replace(/\D/g, ""));
+      const possuiWhatsApp = whatsappValido(normalizarWhatsApp(state.loja.whatsapp));
       elements.whatsapp.setAttribute("aria-disabled", String(!possuiWhatsApp));
       elements.whatsapp.title = possuiWhatsApp ? "Conversar com a loja" : "WhatsApp não informado";
     }
@@ -360,19 +376,20 @@
 
     function criarCardProduto(produto) {
       const card = document.createElement("article");
-      card.className = "product-card";
       const nome = produto.nome || "Produto";
       const imagem = obterImagem(produto);
+      card.className = `product-card${imagem ? " has-image" : ""}`;
       const variacoes = obterVariacoes(produto);
       let variacaoSelecionada = "";
       const midia = imagem
         ? `<img src="${escaparHTML(imagem)}" alt="${escaparHTML(nome)}" loading="lazy" decoding="async">`
         : `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`;
+      const imageClasses = imagem ? "product-image loading" : "product-image is-placeholder";
       const variacoesHTML = variacoes.length
         ? `<div class="variation-group"><span class="variation-title">Escolha uma opção</span><div class="variation-options">${variacoes.map(opcao => `<button class="variation-chip" type="button" data-variation="${escaparHTML(opcao)}" aria-pressed="false">${escaparHTML(opcao)}</button>`).join("")}</div></div>`
         : "";
       card.innerHTML = `
-        <div class="product-image">${midia}</div>
+        <div class="${imageClasses}">${midia}</div>
         <div class="product-body">
           <span class="category-badge">${escaparHTML(produto.categoria || "Geral")}</span>
           <h3 class="product-name">${escaparHTML(nome)}</h3>
@@ -401,7 +418,17 @@
         adicionarAoCarrinho(produto, variacaoSelecionada);
       });
       const img = card.querySelector("img");
-      img?.addEventListener("error", () => { img.parentElement.innerHTML = `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`; }, { once: true });
+      if (img) {
+        img.onload = () => img.parentElement.classList.remove("loading");
+        img.onerror = () => {
+          img.parentElement.className = "product-image is-placeholder";
+          img.parentElement.innerHTML = `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`;
+        };
+        if (img.complete) {
+          if (img.naturalWidth > 0) img.onload();
+          else img.onerror();
+        }
+      }
       return card;
     }
 
@@ -448,8 +475,11 @@
     }
 
     function abrirWhatsApp(produtoNome = "", variacao = "") {
-      const numero = String(state.loja?.whatsapp || "").replace(/\D/g, "");
-      if (!numero) return;
+      const numero = normalizarWhatsApp(state.loja?.whatsapp);
+      if (!whatsappValido(numero)) {
+        alert("WhatsApp da loja inválido. Entre em contato com o lojista.");
+        return;
+      }
       const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao}` : ""}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
       window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener,noreferrer");
     }
