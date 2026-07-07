@@ -280,6 +280,32 @@
       return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor) || 0);
     }
 
+    function parsePreco(valor) {
+      if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
+      const texto = String(valor ?? "").replace(/\s/g, "").replace(/^R\$/i, "");
+      const normalizado = texto.includes(",") ? texto.replace(/\./g, "").replace(",", ".") : texto;
+      const preco = Number(normalizado);
+      return Number.isFinite(preco) ? preco : 0;
+    }
+
+    function parseVariacoes(variacoesTexto, precoBase) {
+      const base = parsePreco(precoBase);
+      return String(variacoesTexto || "")
+        .split(/,(?!\d)/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(item => {
+          const indicePreco = item.lastIndexOf(":");
+          if (indicePreco === -1) return { nome: item, preco: base };
+          const nome = item.slice(0, indicePreco).trim();
+          const precoTexto = item.slice(indicePreco + 1).trim();
+          const temPreco = /^(?:R\$\s*)?\d+(?:[,.]\d{1,2})?$/.test(precoTexto);
+          if (!nome || !temPreco) return { nome: item, preco: base };
+          return { nome, preco: parsePreco(precoTexto) };
+        })
+        .filter(variacao => variacao.nome);
+    }
+
     function normalizarWhatsApp(numero) {
       let digits = String(numero || "").replace(/\D/g, "");
       if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return digits;
@@ -306,17 +332,23 @@
     }
     function mostrarToast(mensagem) { elements.toast.textContent = mensagem; elements.toast.hidden = false; clearTimeout(mostrarToast.timer); mostrarToast.timer = setTimeout(() => { elements.toast.hidden = true; }, 2200); }
     function obterVariacoes(produto) {
-      return String(produto.variacoes || "")
-        .split(",")
-        .map(opcao => opcao.trim())
-        .filter(Boolean);
+      return parseVariacoes(produto.variacoes, produto.preco);
     }
-    function adicionarAoCarrinho(produto, variacao = "") {
+    function adicionarAoCarrinho(produto, variacao = null) {
       const baseId = String(produto.id ?? produto.codigo ?? produto.nome);
-      const id = variacao ? `${baseId}::${variacao}` : baseId;
+      const nomeVariacao = variacao?.nome || "";
+      const precoFinal = variacao ? parsePreco(variacao.preco) : parsePreco(produto.preco);
+      const id = nomeVariacao ? `${baseId}::${nomeVariacao}` : baseId;
       const existente = state.carrinho.find(item => item.id === id);
-      if (existente) existente.quantidade += 1;
-      else state.carrinho.push({ id, produto_id: baseId, nome: produto.nome || "Produto", preco: Number(produto.preco) || 0, imagem_url: obterImagem(produto), variacao, quantidade: 1 });
+      if (existente) {
+        existente.quantidade += 1;
+        existente.preco = precoFinal;
+        existente.preco_final = precoFinal;
+        existente.variacao = nomeVariacao;
+        existente.variacao_escolhida = nomeVariacao;
+      } else {
+        state.carrinho.push({ id, produto_id: baseId, nome: produto.nome || "Produto", preco: precoFinal, preco_final: precoFinal, imagem_url: obterImagem(produto), variacao: nomeVariacao, variacao_escolhida: nomeVariacao, quantidade: 1 });
+      }
       salvarCarrinho(); mostrarToast(`${produto.nome || "Produto"} adicionado ao carrinho`);
     }
     function abrirCarrinho() { window.location.href = `/c/${encodeURIComponent(state.slug)}/carrinho`; }
@@ -380,13 +412,17 @@
       const imagem = obterImagem(produto);
       card.className = `product-card${imagem ? " has-image" : ""}`;
       const variacoes = obterVariacoes(produto);
-      let variacaoSelecionada = "";
+      const precoBase = parsePreco(produto.preco);
+      let variacaoSelecionada = null;
       const midia = imagem
         ? `<img src="${escaparHTML(imagem)}" alt="${escaparHTML(nome)}" loading="lazy" decoding="async">`
         : `<svg class="product-placeholder" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.24L6.1 7.18 12 10.13l5.9-2.95L12 4.24ZM5 8.8v7.46l6 3v-7.45l-6-3Zm8 10.46 6-3V8.8l-6 3v7.45Z"/></svg>`;
       const imageClasses = imagem ? "product-image loading" : "product-image is-placeholder";
       const variacoesHTML = variacoes.length
-        ? `<div class="variation-group"><span class="variation-title">Escolha uma opção</span><div class="variation-options">${variacoes.map(opcao => `<button class="variation-chip" type="button" data-variation="${escaparHTML(opcao)}" aria-pressed="false">${escaparHTML(opcao)}</button>`).join("")}</div></div>`
+        ? `<div class="variation-group"><span class="variation-title">Escolha uma opção</span><div class="variation-options">${variacoes.map((opcao, indice) => {
+            const rotulo = opcao.preco !== precoBase ? `${opcao.nome} · ${formatarPreco(opcao.preco)}` : opcao.nome;
+            return `<button class="variation-chip" type="button" data-variation-index="${indice}" aria-pressed="false">${escaparHTML(rotulo)}</button>`;
+          }).join("")}</div></div>`
         : "";
       card.innerHTML = `
         <div class="${imageClasses}">${midia}</div>
@@ -396,17 +432,18 @@
           ${produto.descricao ? `<p class="product-description">${escaparHTML(produto.descricao)}</p>` : ""}
           <div class="product-footer">
             ${variacoesHTML}
-            <strong class="product-price">${formatarPreco(produto.preco)}</strong>
+            <strong class="product-price">${formatarPreco(precoBase)}</strong>
             <div class="product-actions"><button class="add-cart-button" type="button">Adicionar ao carrinho</button><button class="buy-button" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar agora</button></div>
           </div>`;
       card.querySelectorAll(".variation-chip").forEach(chip => {
         chip.addEventListener("click", () => {
-          variacaoSelecionada = chip.dataset.variation || "";
+          variacaoSelecionada = variacoes[Number(chip.dataset.variationIndex)] || null;
           card.querySelectorAll(".variation-chip").forEach(item => {
             const ativo = item === chip;
             item.classList.toggle("active", ativo);
             item.setAttribute("aria-pressed", String(ativo));
           });
+          card.querySelector(".product-price").textContent = formatarPreco(variacaoSelecionada?.preco ?? precoBase);
         });
       });
       card.querySelector(".buy-button").addEventListener("click", () => {
@@ -438,11 +475,11 @@
         const categoria = String(produto.categoria || "Geral");
         const correspondeCategoria = state.categoria === "todos" || categoria === state.categoria;
         const texto = `${produto.nome || ""} ${produto.descricao || ""} ${categoria} ${produto.variacoes || ""}`.toLocaleLowerCase("pt-BR");
-        const preco = Number(produto.preco) || 0;
+        const preco = parsePreco(produto.preco);
         return correspondeCategoria && (!termo || texto.includes(termo)) && (state.precoMin === null || preco >= state.precoMin) && (state.precoMax === null || preco <= state.precoMax);
       });
-      if (state.ordem === "price-asc") filtrados.sort((a, b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
-      if (state.ordem === "price-desc") filtrados.sort((a, b) => (Number(b.preco) || 0) - (Number(a.preco) || 0));
+      if (state.ordem === "price-asc") filtrados.sort((a, b) => parsePreco(a.preco) - parsePreco(b.preco));
+      if (state.ordem === "price-desc") filtrados.sort((a, b) => parsePreco(b.preco) - parsePreco(a.preco));
       if (state.ordem === "name-asc") filtrados.sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
       return filtrados;
     }
@@ -474,13 +511,13 @@
       });
     }
 
-    function abrirWhatsApp(produtoNome = "", variacao = "") {
+    function abrirWhatsApp(produtoNome = "", variacao = null) {
       const numero = normalizarWhatsApp(state.loja?.whatsapp);
       if (!whatsappValido(numero)) {
         alert("WhatsApp da loja inválido. Entre em contato com o lojista.");
         return;
       }
-      const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao}` : ""}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
+      const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao.nome}\nPreço: ${formatarPreco(variacao.preco)}` : ""}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
       window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener,noreferrer");
     }
 
@@ -494,7 +531,7 @@
       try {
         state.slug = slug;
         carregarCarrinho();
-        const resposta = await fetch(`${API_ORIGIN}/api/loja/${encodeURIComponent(slug)}`, { headers: { Accept: "application/json" } });
+        const resposta = await fetch(`${API_ORIGIN}/api/catalogo/${encodeURIComponent(slug)}`, { headers: { Accept: "application/json" } });
         if (resposta.status === 404) {
           mostrarEstado("error", { titulo: "Loja não encontrada", mensagem: "Este catálogo não existe ou não está mais disponível.", retry: false });
           return;
