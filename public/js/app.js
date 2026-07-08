@@ -286,18 +286,18 @@
      ═══════════════════════════════════════════════ */
   var DOWNLOAD_MAP = {
     aura: {
-      href: 'downloads/modelo_aura.xlsx',
-      download: 'modelo_aura.xlsx',
+      href: '/modelos/modelo-simples.xlsx',
+      download: 'modelo-simples.xlsx',
       label: 'Baixar planilha modelo',
     },
     soleil: {
-      href: 'downloads/modelo_soleil.xlsx',
-      download: 'modelo_soleil.xlsx',
+      href: '/modelos/modelo-variacoes.xlsx',
+      download: 'modelo-variacoes.xlsx',
       label: 'Baixar planilha modelo',
     },
     mercadinho: {
-      href: 'downloads/modelo_mercadinho.xlsx',
-      download: 'modelo_mercadinho.xlsx',
+      href: '/modelos/modelo-completo.xlsx',
+      download: 'modelo-completo.xlsx',
       label: 'Baixar planilha modelo',
     },
   };

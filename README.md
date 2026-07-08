@@ -40,9 +40,9 @@ zapcatalogo/
 │   │   └── app.js           # Intersection Observer, Dropzone, Upload
 │   └── image/
 │       ├── logo.png         # Logo principal
-│       └── ZAPCATALOGO.png  # Fallback da logo
+│       └── logo.png         # Fallback da logo
 │
-├── downloads/               # Planilhas modelo .xlsx
+├── modelos/                 # Planilhas modelo .xlsx
 └── package.json             # Frontend-only (serve para dev)
 ```
 

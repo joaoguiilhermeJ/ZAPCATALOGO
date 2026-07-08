@@ -448,7 +448,7 @@
       });
       card.querySelector(".buy-button").addEventListener("click", () => {
         if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de comprar."); return; }
-        abrirWhatsApp(nome, variacaoSelecionada);
+        abrirWhatsApp(produto, variacaoSelecionada);
       });
       card.querySelector(".add-cart-button").addEventListener("click", () => {
         if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de adicionar ao carrinho."); return; }
@@ -511,13 +511,17 @@
       });
     }
 
-    function abrirWhatsApp(produtoNome = "", variacao = null) {
+    function abrirWhatsApp(produto = null, variacao = null) {
       const numero = normalizarWhatsApp(state.loja?.whatsapp);
       if (!whatsappValido(numero)) {
         alert("WhatsApp da loja inválido. Entre em contato com o lojista.");
         return;
       }
-      const mensagem = produtoNome ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao.nome}\nPreço: ${formatarPreco(variacao.preco)}` : ""}` : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
+      const produtoNome = typeof produto === "string" ? produto : produto?.nome || "";
+      const precoFinal = variacao ? parsePreco(variacao.preco) : produtoNome ? parsePreco(produto?.preco) : null;
+      const mensagem = produtoNome
+        ? `Olá, tenho interesse no produto ${produtoNome}${variacao ? `\nOpção: ${variacao.nome}` : ""}\nPreço: ${formatarPreco(precoFinal)}`
+        : `Olá, gostaria de saber mais sobre o catálogo da ${state.loja.nome_loja || "loja"}`;
       window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener,noreferrer");
     }
 

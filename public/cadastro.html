@@ -36,7 +36,6 @@
     window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000'
       : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com');
-    console.log('API_BASE_URL=', window.API_BASE_URL);
     // Compatibilidade com scripts que leem `window.API_URL`
     if (!window.API_URL) window.API_URL = window.API_BASE_URL;
   </script>
@@ -514,7 +513,7 @@
           class="header-logo"
           width="140" height="40"
           loading="lazy"
-          onerror="this.onerror=null; this.src='image/ZAPCATALOGO.png'"
+          onerror="this.onerror=null; this.src='image/logo.png'"
         >
       </a>
 
@@ -555,6 +554,8 @@
         <div>
           <h2 id="sheetModelsTitle" class="sheet-models-title">Modelos de planilha aceitos</h2>
           <p class="sheet-models-note">Variações podem ser sabores, tamanhos, adicionais ou opções separadas por vírgula.</p>
+          <p class="sheet-models-note">Você pode usar variações com preço próprio, como <strong>Supremo Morango:12, Supremo Nutella:14</strong>.</p>
+          <p class="sheet-models-note">Se a variação não tiver preço, o catálogo usa o preço base do produto.</p>
           <p class="sheet-models-note">Código é opcional, mas recomendado para futuras atualizações sem perder imagens.</p>
         </div>
       </div>
@@ -578,12 +579,12 @@
           <div class="sheet-columns" aria-label="Colunas do modelo com variações">
             <span class="sheet-column">Nome do Produto</span><span class="sheet-column">Preço</span><span class="sheet-column">Descrição</span><span class="sheet-column">Categoria</span><span class="sheet-column">Variações</span>
           </div>
-          <p class="sheet-example">Bolo Personalizado | 85,00 | Massa branca ou cacau 50% | Bolos | 10cm, 15cm, 20cm</p>
+          <p class="sheet-example">Bolo Personalizado | 85,00 | Massa branca ou cacau 50% | Bolos | 10cm:85, 15cm:120, 20cm:160</p>
           <a class="sheet-action" href="/modelos/modelo-variacoes.xlsx" download="modelo-variacoes.xlsx"><i class="fas fa-download mr-1.5"></i>Baixar modelo com variações</a>
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
-              <tbody><tr><td>Bolo Personalizado</td><td>85,00</td><td>Massa branca ou cacau 50%</td><td>Bolos</td><td>10cm, 15cm, 20cm, 25cm</td></tr></tbody>
+              <tbody><tr><td>Bolo Personalizado</td><td>85,00</td><td>Massa branca ou cacau 50%</td><td>Bolos</td><td>10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
             </table>
           </div>
         </article>
@@ -592,12 +593,12 @@
           <div class="sheet-columns" aria-label="Colunas do modelo completo">
             <span class="sheet-column">Código</span><span class="sheet-column">Nome do Produto</span><span class="sheet-column">Preço</span><span class="sheet-column">Descrição</span><span class="sheet-column">Categoria</span><span class="sheet-column">Variações</span>
           </div>
-          <p class="sheet-example">CAM-001 | Camiseta Polo | 89,90 | Malha piquet | Camisetas | P, M, G</p>
+          <p class="sheet-example">BOL-001 | Bolo Personalizado | 85,00 | Massa branca ou cacau 50% | Bolos | 10cm:85, 15cm:120, 20cm:160</p>
           <a class="sheet-action" href="/modelos/modelo-completo.xlsx" download="modelo-completo.xlsx"><i class="fas fa-download mr-1.5"></i>Baixar modelo completo</a>
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Código</th><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
-              <tbody><tr><td>CAM-001</td><td>Camiseta Polo</td><td>89,90</td><td>Malha piquet azul</td><td>Camisetas</td><td>P, M, G, GG</td></tr></tbody>
+              <tbody><tr><td>BOL-001</td><td>Bolo Personalizado</td><td>85,00</td><td>Massa branca ou cacau 50%</td><td>Bolos</td><td>10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
             </table>
           </div>
         </article>
