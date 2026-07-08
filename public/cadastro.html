@@ -1217,6 +1217,18 @@
         this.classList.remove('border-rose-300', 'bg-rose-50');
       });
 
+      function normalizarWhatsApp(numero) {
+        var digits = String(numero || '').replace(/\D/g, '');
+        if (digits.indexOf('55') === 0 && (digits.length === 12 || digits.length === 13)) return digits;
+        if (digits.length === 11) return '55' + digits;
+        if (digits.length === 10) return '55' + digits.slice(0, 2) + '9' + digits.slice(2);
+        return digits;
+      }
+
+      function whatsappValido(numero) {
+        return /^55\d{2}9\d{8}$/.test(numero);
+      }
+
       /* ─── Tratamento do WhatsApp (Máscara reativa) ─── */
       safeAddEventListener(whatsInput, 'input', function () {
         var val = this.value.replace(/\D/g, '');
@@ -1624,10 +1636,11 @@
         }
 
         var whatsapp = whatsInput.value.trim();
-        if (!whatsapp) {
+        var whatsappNormalizado = normalizarWhatsApp(whatsapp);
+        if (!whatsappValido(whatsappNormalizado)) {
           whatsInput.classList.add('border-rose-300', 'bg-rose-50');
           whatsInput.focus();
-          showToast('O WhatsApp é obrigatório para receber os pedidos.', 'error');
+          showToast('Informe um WhatsApp válido com DDD.', 'error');
           return;
         }
 
@@ -1647,7 +1660,7 @@
         // ─── ETAPA 1: ONBOARDING (Geração do Catálogo) ───
         var onboardingData = new FormData();
         onboardingData.append('nome_loja', nome);
-        onboardingData.append('whatsapp', whatsapp);
+        onboardingData.append('whatsapp', whatsappNormalizado);
         onboardingData.append('cor_tema', state.cor);
         
         if (state.logoFile) {

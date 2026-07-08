@@ -124,6 +124,18 @@
       </section>
 
       <section class="section">
+        <div class="section-head"><h2>Atualizar produtos por planilha</h2><span id="sheetProductCount" class="count">0 produtos</span></div>
+        <p class="subtitle" style="margin:0 0 12px;color:var(--muted);">Os produtos serão atualizados pela planilha e as imagens existentes serão mantidas quando o código ou nome do produto for o mesmo.</p>
+        <form id="sheetForm" class="grid">
+          <div class="field">
+            <label for="sheetInput">Planilha .xlsx ou .xls</label>
+            <input id="sheetInput" class="input" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+          </div>
+          <button id="sheetSubmit" class="btn primary" type="submit">Atualizar mantendo imagens</button>
+        </form>
+      </section>
+
+      <section class="section">
         <div class="section-head"><h2>Produtos</h2><span id="productCount" class="count">0 produtos</span></div>
         <div id="products" class="products"></div>
       </section>
@@ -147,6 +159,7 @@
       publicUrl: document.getElementById("publicUrl"), copyLink: document.getElementById("copyLink"), openCatalog: document.getElementById("openCatalog"), reload: document.getElementById("reloadPanel"),
       storeForm: document.getElementById("storeForm"), nameInput: document.getElementById("storeNameInput"), whatsappInput: document.getElementById("storeWhatsappInput"),
       logoInput: document.getElementById("storeLogoInput"), colorInput: document.getElementById("storeColorInput"), colorText: document.getElementById("storeColorText"),
+      sheetForm: document.getElementById("sheetForm"), sheetInput: document.getElementById("sheetInput"), sheetSubmit: document.getElementById("sheetSubmit"), sheetCount: document.getElementById("sheetProductCount"),
       products: document.getElementById("products"), productCount: document.getElementById("productCount"), toast: document.getElementById("toast")
     };
 
@@ -218,7 +231,9 @@
       return produto.imagem_url ? `<img src="${escaparHTML(produto.imagem_url)}" alt="${escaparHTML(produto.nome || "Produto")}">` : "Sem imagem";
     }
     function renderizarProdutos() {
-      el.productCount.textContent = `${state.produtos.length} ${state.produtos.length === 1 ? "produto" : "produtos"}`;
+      const totalProdutos = `${state.produtos.length} ${state.produtos.length === 1 ? "produto" : "produtos"}`;
+      el.productCount.textContent = totalProdutos;
+      el.sheetCount.textContent = totalProdutos;
       el.products.replaceChildren(...state.produtos.map(produto => {
         const card = document.createElement("article");
         card.className = `product${produto.ativo === false ? " inactive" : ""}`;
@@ -317,6 +332,42 @@
         mostrarToast(erro.message, "error");
       }
     }
+    async function atualizarProdutosPorPlanilha(event) {
+      event.preventDefault();
+      const file = el.sheetInput.files?.[0];
+      if (!file) {
+        mostrarToast("Escolha uma planilha .xlsx ou .xls", "error");
+        return;
+      }
+      if (!/\.(xlsx|xls)$/i.test(file.name || "")) {
+        mostrarToast("Envie uma planilha .xlsx ou .xls", "error");
+        return;
+      }
+
+      const catalogoId = state.catalogo?.id || "";
+      const textoOriginal = el.sheetSubmit.textContent;
+      el.sheetSubmit.disabled = true;
+      el.sheetSubmit.textContent = "Atualizando...";
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("slug", state.slug);
+        formData.append("edit_token", state.token);
+        if (catalogoId) {
+          formData.append("catalogo_id", catalogoId);
+          formData.append("catalogId", catalogoId);
+        }
+        await api("/api/produtos/upload", { method: "POST", body: formData });
+        el.sheetInput.value = "";
+        mostrarToast("Produtos atualizados mantendo imagens");
+        await carregarPainel();
+      } catch (erro) {
+        mostrarToast(erro.message, "error");
+      } finally {
+        el.sheetSubmit.disabled = false;
+        el.sheetSubmit.textContent = textoOriginal;
+      }
+    }
     async function trocarImagem(card, id) {
       const input = card.querySelector(".file-input");
       if (!input.files?.[0]) { mostrarToast("Escolha uma imagem primeiro", "error"); return; }
@@ -333,6 +384,7 @@
     }
 
     el.storeForm.addEventListener("submit", salvarLoja);
+    el.sheetForm.addEventListener("submit", atualizarProdutosPorPlanilha);
     el.reload.addEventListener("click", carregarPainel);
     el.copyLink.addEventListener("click", async () => {
       try {
