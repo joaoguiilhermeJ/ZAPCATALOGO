@@ -751,13 +751,22 @@
               <i class="fas fa-check"></i>
             </div>
             <h2 id="publishTitle" class="mt-5 text-2xl font-extrabold text-slate-900">Seu catálogo está pronto</h2>
-            <p class="mt-2 text-sm text-slate-500">Compartilhe o link abaixo com seus clientes.</p>
-            <div class="mt-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+            <p class="mt-2 text-sm text-slate-500">Compartilhe o link público com seus clientes e guarde o link secreto para editar depois.</p>
+            <label class="mt-6 block text-left text-xs font-bold uppercase tracking-wide text-slate-500" for="catalogLinkInput">Link público do catálogo</label>
+            <div class="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
               <input id="catalogLinkInput" class="min-w-0 flex-1 bg-transparent px-2 text-sm text-slate-700 outline-none" type="text" readonly aria-label="Link do catálogo">
               <button id="copyCatalogLinkButton" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
                 <i class="fas fa-copy mr-1"></i> Copiar
               </button>
             </div>
+            <label class="mt-4 block text-left text-xs font-bold uppercase tracking-wide text-slate-500" for="adminLinkInput">Link secreto de edição</label>
+            <div class="mt-2 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-2">
+              <input id="adminLinkInput" class="min-w-0 flex-1 bg-transparent px-2 text-sm text-amber-900 outline-none" type="text" readonly aria-label="Link secreto de edição">
+              <button id="copyAdminLinkButton" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-900 shadow-sm">
+                <i class="fas fa-copy mr-1"></i> Copiar edição
+              </button>
+            </div>
+            <p class="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-left text-xs font-semibold text-amber-800">Guarde este link. Ele permite editar seu catálogo sem login.</p>
             <a id="openCatalogButton" class="btn-cadastro mt-5 text-center" href="#">
               <i class="fas fa-external-link-alt"></i> <span>Abrir catálogo</span>
             </a>
@@ -1052,6 +1061,8 @@
       var openCatalogButton = $('openCatalogButton');
       var catalogLinkInput = $('catalogLinkInput');
       var copyCatalogLinkButton = $('copyCatalogLinkButton');
+      var adminLinkInput = $('adminLinkInput');
+      var copyAdminLinkButton = $('copyAdminLinkButton');
       var stepIndicators = [$('stepIndicator1'), $('stepIndicator2'), $('stepIndicator3')];
       var previewGlow     = $('previewGlow');
       var previewContent  = $('previewContent');
@@ -1581,16 +1592,22 @@
 
       safeAddEventListener(continueToPublishButton, 'click', goToPublishStep);
       safeAddEventListener(skipImagesButton, 'click', goToPublishStep);
-      safeAddEventListener(copyCatalogLinkButton, 'click', async function () {
-        var link = catalogLinkInput.value;
+      async function copyReadonlyLink(input, message) {
+        var link = input.value;
         try {
           await navigator.clipboard.writeText(link);
         } catch (err) {
-          catalogLinkInput.focus();
-          catalogLinkInput.select();
+          input.focus();
+          input.select();
           document.execCommand('copy');
         }
-        showToast('Link do catálogo copiado!', 'success');
+        showToast(message, 'success');
+      }
+      safeAddEventListener(copyCatalogLinkButton, 'click', function () {
+        copyReadonlyLink(catalogLinkInput, 'Link público copiado!');
+      });
+      safeAddEventListener(copyAdminLinkButton, 'click', function () {
+        copyReadonlyLink(adminLinkInput, 'Link de edição copiado!');
       });
 
       safeAddEventListener(form, 'submit', async function (e) {
@@ -1665,6 +1682,7 @@
         var catalogId = onboardingRes.catalogo.id;
         var slug = onboardingRes.catalogo.slug;
         var editToken = onboardingRes.edit_token || onboardingRes.catalogo.edit_token;
+        var adminUrl = onboardingRes.admin_url || onboardingRes.catalogo.admin_url;
 
         // ─── ETAPA 2: UPLOAD DOS PRODUTOS DO EXCEL ───
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importando produtos...';
@@ -1683,8 +1701,12 @@
           renderImportedProducts(productsBody.produtos || [], apiUrl, editToken);
           var catalogPath = '/c/' + encodeURIComponent(slug);
           var catalogUrl = new URL(catalogPath, window.location.origin).href;
+          if (!adminUrl) {
+            adminUrl = new URL('/admin/' + encodeURIComponent(slug) + '?token=' + encodeURIComponent(editToken), window.location.origin).href;
+          }
           openCatalogButton.href = catalogPath;
           catalogLinkInput.value = catalogUrl;
+          adminLinkInput.value = adminUrl;
           setOnboardingStep(2);
           showToast('Produtos importados. Agora você pode adicionar as imagens.', 'success');
         } catch (err) {
