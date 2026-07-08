@@ -246,8 +246,7 @@
 
     const DEFAULT_THEME = "#6c5ce7";
     const API_ORIGIN = (() => {
-      const configured = window.API_BASE_URL || window.API_URL || "https://zapcatalogobackend-kg0c.onrender.com";
-      if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return "";
+      const configured = window.API_BASE_URL || window.API_URL || "";
       return configured.replace(/\/$/, "").replace(/\/api$/, "");
     })();
     const state = { loja: null, produtos: [], carrinho: [], categoria: "todos", busca: "", ordem: "relevance", precoMin: null, precoMax: null, slug: "" };

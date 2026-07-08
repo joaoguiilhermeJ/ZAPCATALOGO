@@ -81,7 +81,7 @@
   <script>
     "use strict";
     const DEFAULT_THEME="#6c5ce7";
-    const API_ORIGIN=(()=>{const configured=window.API_BASE_URL||window.API_URL||"https://zapcatalogobackend-kg0c.onrender.com";if(["localhost","127.0.0.1"].includes(location.hostname))return"";return configured.replace(/\/$/,"").replace(/\/api$/,"")})();
+    const API_ORIGIN=(()=>{const configured=window.API_BASE_URL||window.API_URL||"";return configured.replace(/\/$/,"").replace(/\/api$/,"")})();
     const state={slug:"",loja:null,itens:[]};
     const el={loading:document.getElementById("loadingState"),error:document.getElementById("errorState"),content:document.getElementById("contentState"),errorTitle:document.getElementById("errorTitle"),errorMessage:document.getElementById("errorMessage"),avatar:document.getElementById("storeAvatar"),storeName:document.getElementById("storeName"),items:document.getElementById("itemsContainer"),cartContent:document.getElementById("cartContent"),empty:document.getElementById("emptyState"),count:document.getElementById("itemCount"),subtotal:document.getElementById("subtotal"),total:document.getElementById("total"),checkout:document.getElementById("checkoutButton")};
     function obterSlug(){const query=new URLSearchParams(location.search).get("slug")||new URLSearchParams(location.search).get("hash");if(query)return query;const partes=location.pathname.split("/").filter(Boolean);return partes[0]==="c"?partes[1]||"":""}
