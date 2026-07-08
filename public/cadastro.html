@@ -32,10 +32,8 @@
   </script>
   <script src="js/api-config.js"></script>
   <script>
-    // API_BASE_URL unificada: localhost em dev, Render em produção (ajuste conforme seu serviço)
-    window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3000'
-      : (window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com');
+    // Usa /api relativo para passar pelo proxy local/Vercel e evitar falhas de CORS.
+    window.API_BASE_URL = '';
     // Compatibilidade com scripts que leem `window.API_URL`
     if (!window.API_URL) window.API_URL = window.API_BASE_URL;
   </script>
@@ -1020,6 +1018,21 @@
         }
       }
 
+      function apiBaseUrl() {
+        return window.API_BASE_URL || '';
+      }
+
+      function mensagemErroPlanilha(err) {
+        var message = String(err && err.message ? err.message : err || '');
+        if (/networkerror|failed to fetch|load failed|network request failed/i.test(message)) {
+          return 'Não foi possível conectar ao servidor. Se ele estiver acordando no Render, aguarde alguns segundos e tente enviar a planilha novamente.';
+        }
+        if (/tempo limite/i.test(message)) {
+          return 'O servidor demorou para responder. Se ele estiver acordando no Render, tente novamente em alguns segundos.';
+        }
+        return message || 'Não foi possível validar a planilha.';
+      }
+
       // Algoritmo matemático YIQ para contraste dinâmico de luminosidade
       function getContrastColorYIQ(hex) {
         if (!hex) return '#ffffff';
@@ -1416,10 +1429,10 @@
         sheetFileName.textContent = 'Carregando planilha...';
         sheetProductCount.textContent = 'Validando dados no servidor...';
 
-        fetchWithTimeout((window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com') + '/api/upload', { 
+        fetchWithTimeout(apiBaseUrl() + '/api/upload', {
           method: 'POST', 
           body: formData 
-        }, 10000) // Timeout de 10 segundos
+        }, 30000) // Render pode demorar alguns segundos para acordar
           .then(function (r) {
             if (!r.ok) {
               return r.json().then(function (d) { 
@@ -1447,13 +1460,14 @@
             showToast('Planilha importada e validada com sucesso!', 'success');
           })
           .catch(function (err) {
+            console.error('[Cadastro] Erro ao validar planilha:', err);
             sheetPlaceholder.style.display = 'flex';
             sheetFileInfo.classList.add('hidden');
             sheetRemove.style.display = 'none';
             sheetDropzone.classList.remove('has-logo');
             sheetInput.value = '';
             sheetData = null;
-            showToast('Erro ao ler planilha: ' + err.message, 'error');
+            showToast('Erro ao ler planilha: ' + mensagemErroPlanilha(err), 'error');
           });
       }
 
@@ -1656,7 +1670,7 @@
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando estoque e gerando catálogo...';
 
         // Em dev usamos caminhos relativos para aproveitar o dev-server (proxy /api -> backend)
-        var apiUrl = window.API_BASE_URL || window.API_URL || 'https://zapcatalogobackend-kg0c.onrender.com';
+        var apiUrl = apiBaseUrl();
         
         // ─── ETAPA 1: ONBOARDING (Geração do Catálogo) ───
         var onboardingData = new FormData();
