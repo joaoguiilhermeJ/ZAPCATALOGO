@@ -39,5 +39,5 @@
   }
 
   // Produção — seu backend no Render
-  window.API_URL = 'https://zapcatalogobackend-kg0c.onrender.com';
+  window.API_URL = 'https://zapcatalogobackend.onrender.com';
 })();
