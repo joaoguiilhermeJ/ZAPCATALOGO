@@ -158,14 +158,19 @@
       return configured.replace(/\/$/, "").replace(/\/api$/, "");
     })();
     const state = { slug: "", token: "", catalogo: null, produtos: [] };
+    function dom(id) {
+      const node = document.getElementById(id);
+      if (!node) console.warn(`[Admin] elemento DOM ausente: #${id}`);
+      return node;
+    }
     const el = {
-      loading: document.getElementById("loadingState"), error: document.getElementById("errorState"), content: document.getElementById("contentState"),
-      errorMessage: document.getElementById("errorMessage"), avatar: document.getElementById("storeAvatar"), storeName: document.getElementById("storeName"),
-      publicUrl: document.getElementById("publicUrl"), copyLink: document.getElementById("copyLink"), openCatalog: document.getElementById("openCatalog"), reload: document.getElementById("reloadPanel"),
-      storeForm: document.getElementById("storeForm"), nameInput: document.getElementById("storeNameInput"), whatsappInput: document.getElementById("storeWhatsappInput"),
-      logoInput: document.getElementById("storeLogoInput"), colorInput: document.getElementById("storeColorInput"), colorText: document.getElementById("storeColorText"),
-      sheetForm: document.getElementById("sheetForm"), sheetInput: document.getElementById("sheetInput"), sheetSubmit: document.getElementById("sheetSubmit"), sheetCount: document.getElementById("sheetProductCount"),
-      products: document.getElementById("products"), productCount: document.getElementById("productCount"), toast: document.getElementById("toast")
+      loading: dom("loadingState"), error: dom("errorState"), content: dom("contentState"),
+      errorMessage: dom("errorMessage"), avatar: dom("storeAvatar"), storeName: dom("storeName"),
+      publicUrl: dom("publicUrl"), copyLink: dom("copyLink"), openCatalog: dom("openCatalog"), reload: dom("reloadPanel"),
+      storeForm: dom("storeForm"), nameInput: dom("storeNameInput"), whatsappInput: dom("storeWhatsappInput"),
+      logoInput: dom("storeLogoInput"), colorInput: dom("storeColorInput"), colorText: dom("storeColorText"),
+      sheetForm: dom("sheetForm"), sheetInput: dom("sheetInput"), sheetSubmit: dom("sheetSubmit"), sheetCount: dom("sheetProductCount"),
+      products: dom("products"), productCount: dom("productCount"), toast: dom("toast")
     };
 
     function obterSlug() {
@@ -184,15 +189,39 @@
       document.documentElement.style.setProperty("--theme", cor);
       document.documentElement.style.setProperty("--theme-dark", ajustarCor(cor, -42));
       document.documentElement.style.setProperty("--theme-soft", `${cor}18`);
-      document.getElementById("themeMeta").content = cor;
+      const themeMeta = dom("themeMeta");
+      if (themeMeta) themeMeta.content = cor;
+    }
+    function setHidden(node, hidden) {
+      if (!node) return;
+      node.hidden = hidden;
+      node.style.display = hidden ? "none" : "";
+    }
+    function setView(view) {
+      setHidden(el.loading, view !== "loading");
+      setHidden(el.error, view !== "error");
+      setHidden(el.content, view !== "panel");
+    }
+    function mostrarErro(mensagem = "Token invalido ou expirado.") {
+      if (el.errorMessage) el.errorMessage.textContent = mensagem;
+      setView("error");
+    }
+    function mostrarPainel() {
+      setView("panel");
     }
     function mostrarEstado(nome, mensagem = "") {
-      el.loading.hidden = nome !== "loading";
-      el.error.hidden = nome !== "error";
-      el.content.hidden = nome !== "content";
-      if (mensagem) el.errorMessage.textContent = mensagem;
+      if (nome === "content" || nome === "panel") {
+        mostrarPainel();
+        return;
+      }
+      if (nome === "error") {
+        mostrarErro(mensagem);
+        return;
+      }
+      setView("loading");
     }
     function mostrarToast(mensagem, tipo = "success") {
+      if (!el.toast) return;
       el.toast.textContent = mensagem;
       el.toast.classList.toggle("error", tipo === "error");
       el.toast.hidden = false;
@@ -231,35 +260,39 @@
     }
     function renderizarLoja() {
       const loja = state.catalogo;
+      if (!loja || typeof loja !== "object") throw new Error("Catalogo invalido para renderizacao.");
       aplicarTema(loja.cor_tema);
-      el.storeName.textContent = loja.nome_loja || "Minha loja";
+      if (el.storeName) el.storeName.textContent = loja.nome_loja || "Minha loja";
       document.title = `Editar - ${loja.nome_loja || "Catalogo"}`;
-      el.avatar.replaceChildren();
-      if (loja.logo_url) {
+      el.avatar?.replaceChildren();
+      if (el.avatar && loja.logo_url) {
         const img = new Image();
         img.src = loja.logo_url;
         img.alt = `Logo de ${loja.nome_loja || "loja"}`;
         img.addEventListener("error", () => { el.avatar.textContent = (loja.nome_loja || "L").trim().charAt(0) || "L"; }, { once: true });
         el.avatar.appendChild(img);
       } else {
-        el.avatar.textContent = (loja.nome_loja || "L").trim().charAt(0) || "L";
+        if (el.avatar) el.avatar.textContent = (loja.nome_loja || "L").trim().charAt(0) || "L";
       }
-      el.publicUrl.textContent = loja.catalogo_url;
-      el.openCatalog.href = loja.catalogo_url;
-      el.nameInput.value = loja.nome_loja || "";
-      el.whatsappInput.value = loja.whatsapp || "";
-      el.logoInput.value = loja.logo_url || "";
-      el.colorInput.value = normalizarCor(loja.cor_tema);
-      el.colorText.value = normalizarCor(loja.cor_tema);
+      if (el.publicUrl) el.publicUrl.textContent = loja.catalogo_url || "";
+      if (el.openCatalog) el.openCatalog.href = loja.catalogo_url || "#";
+      if (el.nameInput) el.nameInput.value = loja.nome_loja || "";
+      if (el.whatsappInput) el.whatsappInput.value = loja.whatsapp || "";
+      if (el.logoInput) el.logoInput.value = loja.logo_url || "";
+      if (el.colorInput) el.colorInput.value = normalizarCor(loja.cor_tema);
+      if (el.colorText) el.colorText.value = normalizarCor(loja.cor_tema);
     }
     function productImage(produto) {
-      return produto.imagem_url ? `<img src="${escaparHTML(produto.imagem_url)}" alt="${escaparHTML(produto.nome || "Produto")}">` : "Sem imagem";
+      return produto?.imagem_url ? `<img src="${escaparHTML(produto.imagem_url)}" alt="${escaparHTML(produto.nome || "Produto")}">` : "Sem imagem";
     }
     function renderizarProdutos() {
-      const totalProdutos = `${state.produtos.length} ${state.produtos.length === 1 ? "produto" : "produtos"}`;
-      el.productCount.textContent = totalProdutos;
-      el.sheetCount.textContent = totalProdutos;
-      el.products.replaceChildren(...state.produtos.map(produto => {
+      const produtos = Array.isArray(state.produtos) ? state.produtos : [];
+      const totalProdutos = `${produtos.length} ${produtos.length === 1 ? "produto" : "produtos"}`;
+      if (el.productCount) el.productCount.textContent = totalProdutos;
+      if (el.sheetCount) el.sheetCount.textContent = totalProdutos;
+      if (!el.products) return;
+      el.products.replaceChildren(...produtos.map(item => {
+        const produto = item || {};
         const card = document.createElement("article");
         const disponivel = produto.disponivel !== false;
         card.className = `product${produto.ativo === false ? " inactive" : ""}`;
@@ -295,15 +328,21 @@
             </div>
           </div>`;
         const form = card.querySelector(".product-form");
-        const disponivelInput = form.elements.disponivel;
+        const disponivelInput = form?.elements?.disponivel;
         const motivoField = card.querySelector(".availability-reason");
-        disponivelInput.addEventListener("change", () => { motivoField.hidden = disponivelInput.checked; });
-        form.addEventListener("submit", event => salvarProduto(event, produto.id));
-        card.querySelector(".toggle-active").addEventListener("click", () => alterarAtivo(produto.id, produto.ativo === false));
-        card.querySelector(".upload-image").addEventListener("click", () => trocarImagem(card, produto.id));
-        card.querySelector(".reload-product").addEventListener("click", carregarPainel);
+        if (disponivelInput && motivoField) disponivelInput.addEventListener("change", () => { motivoField.hidden = disponivelInput.checked; });
+        form?.addEventListener("submit", event => salvarProduto(event, produto.id));
+        card.querySelector(".toggle-active")?.addEventListener("click", () => alterarAtivo(produto.id, produto.ativo === false));
+        card.querySelector(".upload-image")?.addEventListener("click", () => trocarImagem(card, produto.id));
+        card.querySelector(".reload-product")?.addEventListener("click", carregarPainel);
         return card;
       }));
+    }
+    function renderizarPainel(catalogo, produtos) {
+      state.catalogo = catalogo;
+      state.produtos = Array.isArray(produtos) ? produtos : [];
+      renderizarLoja();
+      renderizarProdutos();
     }
     async function carregarPainel() {
       mostrarEstado("loading");
@@ -321,26 +360,28 @@
         if (!Array.isArray(produtos)) {
           throw new Error("Resposta inesperada: lista de produtos invalida.");
         }
-        state.catalogo = catalogo;
-        state.produtos = produtos;
-        renderizarLoja();
-        renderizarProdutos();
-        mostrarEstado("content");
+        try {
+          renderizarPainel(catalogo, produtos);
+          mostrarPainel();
+        } catch (error) {
+          console.error("[Admin] erro ao renderizar painel:", error);
+          mostrarErro("Erro ao montar o painel. Verifique o console.");
+        }
       } catch (erro) {
         console.error("Erro no painel:", erro);
-        mostrarEstado("error", erro.message || "Token invalido ou expirado.");
+        mostrarErro(erro.message || "Token invalido ou expirado.");
       }
     }
     async function salvarLoja(event) {
       event.preventDefault();
-      const button = el.storeForm.querySelector("button[type=submit]");
-      button.disabled = true;
+      const button = el.storeForm?.querySelector("button[type=submit]");
+      if (button) button.disabled = true;
       try {
         const payload = {
-          nome_loja: el.nameInput.value.trim(),
-          whatsapp: el.whatsappInput.value.trim(),
-          cor_tema: normalizarCor(el.colorText.value || el.colorInput.value),
-          logo_url: el.logoInput.value.trim(),
+          nome_loja: el.nameInput?.value.trim() || "",
+          whatsapp: el.whatsappInput?.value.trim() || "",
+          cor_tema: normalizarCor(el.colorText?.value || el.colorInput?.value),
+          logo_url: el.logoInput?.value.trim() || "",
         };
         const dados = await api(`/api/admin/catalogos/${encodeURIComponent(state.slug)}`, { method: "PUT", body: JSON.stringify(payload) });
         state.catalogo = dados.catalogo;
@@ -349,19 +390,19 @@
       } catch (erro) {
         mostrarToast(erro.message, "error");
       } finally {
-        button.disabled = false;
+        if (button) button.disabled = false;
       }
     }
     async function salvarProduto(event, id) {
       event.preventDefault();
       const form = event.currentTarget;
       const button = form.querySelector("button[type=submit]");
-      button.disabled = true;
+      if (button) button.disabled = true;
       try {
         const data = new FormData(form);
         const payload = Object.fromEntries(data.entries());
-        payload.disponivel = form.elements.disponivel.checked;
-        payload.motivo_indisponivel = form.elements.motivo_indisponivel.value.trim();
+        payload.disponivel = form.elements.disponivel?.checked !== false;
+        payload.motivo_indisponivel = form.elements.motivo_indisponivel?.value.trim() || "";
         const dados = await api(`/api/admin/produtos/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(payload) });
         state.produtos = state.produtos.map(produto => produto.id === id ? dados.produto : produto);
         renderizarProdutos();
@@ -369,7 +410,7 @@
       } catch (erro) {
         mostrarToast(erro.message, "error");
       } finally {
-        button.disabled = false;
+        if (button) button.disabled = false;
       }
     }
     async function alterarAtivo(id, ativo) {
@@ -384,7 +425,7 @@
     }
     async function atualizarProdutosPorPlanilha(event) {
       event.preventDefault();
-      const file = el.sheetInput.files?.[0];
+      const file = el.sheetInput?.files?.[0];
       if (!file) {
         mostrarToast("Escolha uma planilha .xlsx ou .xls", "error");
         return;
@@ -395,9 +436,11 @@
       }
 
       const catalogoId = state.catalogo?.id || "";
-      const textoOriginal = el.sheetSubmit.textContent;
-      el.sheetSubmit.disabled = true;
-      el.sheetSubmit.textContent = "Atualizando...";
+      const textoOriginal = el.sheetSubmit?.textContent || "Atualizar mantendo imagens";
+      if (el.sheetSubmit) {
+        el.sheetSubmit.disabled = true;
+        el.sheetSubmit.textContent = "Atualizando...";
+      }
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -414,8 +457,10 @@
       } catch (erro) {
         mostrarToast(erro.message, "error");
       } finally {
-        el.sheetSubmit.disabled = false;
-        el.sheetSubmit.textContent = textoOriginal;
+        if (el.sheetSubmit) {
+          el.sheetSubmit.disabled = false;
+          el.sheetSubmit.textContent = textoOriginal;
+        }
       }
     }
     async function trocarImagem(card, id) {
@@ -433,25 +478,25 @@
       }
     }
 
-    el.storeForm.addEventListener("submit", salvarLoja);
-    el.sheetForm.addEventListener("submit", atualizarProdutosPorPlanilha);
-    el.reload.addEventListener("click", carregarPainel);
-    el.copyLink.addEventListener("click", async () => {
+    el.storeForm?.addEventListener("submit", salvarLoja);
+    el.sheetForm?.addEventListener("submit", atualizarProdutosPorPlanilha);
+    el.reload?.addEventListener("click", carregarPainel);
+    el.copyLink?.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(state.catalogo.catalogo_url);
+        await navigator.clipboard.writeText(state.catalogo?.catalogo_url || "");
         mostrarToast("Link copiado");
       } catch {
         mostrarToast("Nao foi possivel copiar", "error");
       }
     });
-    el.colorInput.addEventListener("input", event => { el.colorText.value = event.target.value; aplicarTema(event.target.value); });
-    el.colorText.addEventListener("input", event => { if (/^#[0-9a-f]{6}$/i.test(event.target.value)) { el.colorInput.value = event.target.value; aplicarTema(event.target.value); } });
+    el.colorInput?.addEventListener("input", event => { if (el.colorText) el.colorText.value = event.target.value; aplicarTema(event.target.value); });
+    el.colorText?.addEventListener("input", event => { if (/^#[0-9a-f]{6}$/i.test(event.target.value)) { if (el.colorInput) el.colorInput.value = event.target.value; aplicarTema(event.target.value); } });
 
     document.addEventListener("DOMContentLoaded", () => {
       state.slug = obterSlug();
       state.token = new URLSearchParams(location.search).get("token") || "";
       if (!state.slug || !state.token) {
-        mostrarEstado("error", "Este painel precisa de slug e token de edicao.");
+        mostrarErro("Este painel precisa de slug e token de edicao.");
         return;
       }
       carregarPainel();
