@@ -44,6 +44,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     /* ═══════════════════════════════════════════════
        Animações & Transições (Cadastro Page)
        ═══════════════════════════════════════════════ */
@@ -342,6 +351,8 @@
     }
 
     .sheet-models {
+      width: 100%;
+      max-width: 100%;
       margin: 0 0 28px;
       padding: 16px;
       border: 1px solid #e2e8f0;
@@ -370,10 +381,14 @@
       color: #64748b;
     }
     .sheet-model-grid {
+      width: 100%;
       display: grid;
       gap: 10px;
     }
     .sheet-model-card {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       background: #fff;
@@ -401,6 +416,7 @@
       white-space: nowrap;
     }
     .sheet-example {
+      max-width: 100%;
       margin: 0;
       padding: 8px 10px;
       border-radius: 10px;
@@ -408,6 +424,7 @@
       color: #475569;
       font-size: 0.68rem;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .sheet-table-wrap {
       margin-top: 10px;
@@ -470,9 +487,130 @@
       width: 100%;
       height: 100%;
     }
+    .step-label-short {
+      display: none;
+    }
     @media (min-width: 720px) {
       .sheet-model-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
+      .cadastro-step {
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 22px;
+      }
+      .cadastro-step-item {
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-align: center;
+        font-size: 0.62rem;
+        line-height: 1.15;
+        white-space: normal;
+      }
+      .cadastro-step-number {
+        width: 20px;
+        height: 20px;
+        font-size: 0.58rem;
+      }
+      .cadastro-step-line {
+        width: clamp(12px, 5vw, 20px);
+        flex: 0 1 20px;
+      }
+      .step-label-full {
+        display: none;
+      }
+      .step-label-short {
+        display: inline;
+      }
+      .sheet-models {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 12px;
+        border-radius: 18px;
+      }
+      .sheet-models-head {
+        display: block;
+      }
+      .sheet-model-grid {
+        grid-template-columns: 1fr;
+      }
+      .sheet-model-card {
+        padding: 12px;
+        overflow: hidden;
+      }
+      .sheet-model-card h4 {
+        font-size: 0.76rem;
+      }
+      .sheet-columns {
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .sheet-column {
+        max-width: 100%;
+        padding: 4px 7px;
+        font-size: 0.58rem;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .sheet-example {
+        font-size: 0.64rem;
+      }
+      .sheet-action {
+        width: 100%;
+        min-height: 44px;
+        padding: 0 12px;
+        text-align: center;
+        line-height: 1.25;
+      }
+      .sheet-table-wrap {
+        overflow-x: visible;
+        border: 0;
+        background: transparent;
+      }
+      .sheet-table {
+        min-width: 0;
+        width: 100%;
+        display: block;
+        border-collapse: separate;
+        font-size: 0.68rem;
+      }
+      .sheet-table thead {
+        display: none;
+      }
+      .sheet-table tbody,
+      .sheet-table tr {
+        display: block;
+        width: 100%;
+      }
+      .sheet-table tr {
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+      }
+      .sheet-table td {
+        display: grid;
+        grid-template-columns: minmax(96px, 38%) 1fr;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .sheet-table td::before {
+        content: attr(data-label);
+        color: #0f172a;
+        font-size: 0.62rem;
+        font-weight: 800;
+      }
+      .sheet-table td:last-child {
+        border-bottom: 0;
       }
     }
 
@@ -533,17 +671,17 @@
     <div class="cadastro-step justify-center mb-8 sm:mb-10">
       <div id="stepIndicator1" class="cadastro-step-item active">
         <span class="cadastro-step-number">1</span>
-        <span>Configurar Loja</span>
+        <span><span class="step-label-full">Configurar Loja</span><span class="step-label-short">Loja</span></span>
       </div>
       <span class="cadastro-step-line"></span>
       <div id="stepIndicator2" class="cadastro-step-item">
         <span class="cadastro-step-number">2</span>
-        <span>Adicionar Imagens</span>
+        <span><span class="step-label-full">Adicionar Imagens</span><span class="step-label-short">Imagens</span></span>
       </div>
       <span class="cadastro-step-line"></span>
       <div id="stepIndicator3" class="cadastro-step-item">
         <span class="cadastro-step-number">3</span>
-        <span>Publicar</span>
+        <span><span class="step-label-full">Publicar</span><span class="step-label-short">Publicar</span></span>
       </div>
     </div>
 
@@ -568,7 +706,7 @@
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th></tr></thead>
-              <tbody><tr><td>Copo da Felicidade</td><td>12,00</td><td>Copo 200ml recheado</td><td>Sobremesas</td></tr></tbody>
+              <tbody><tr><td data-label="Nome do Produto">Copo da Felicidade</td><td data-label="Preço">12,00</td><td data-label="Descrição">Copo 200ml recheado</td><td data-label="Categoria">Sobremesas</td></tr></tbody>
             </table>
           </div>
         </article>
@@ -582,7 +720,7 @@
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
-              <tbody><tr><td>Bolo Personalizado</td><td>85,00</td><td>Massa branca ou cacau 50%</td><td>Bolos</td><td>10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
+              <tbody><tr><td data-label="Nome do Produto">Bolo Personalizado</td><td data-label="Preço">85,00</td><td data-label="Descrição">Massa branca ou cacau 50%</td><td data-label="Categoria">Bolos</td><td data-label="Variações">10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
             </table>
           </div>
         </article>
@@ -596,7 +734,7 @@
           <div class="sheet-table-wrap">
             <table class="sheet-table">
               <thead><tr><th>Nome do Produto</th><th>Preço</th><th>Descrição</th><th>Categoria</th><th>Variações</th></tr></thead>
-              <tbody><tr><td>Bolo Personalizado</td><td>85,00</td><td>Massa branca ou cacau 50%</td><td>Bolos</td><td>10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
+              <tbody><tr><td data-label="Nome do Produto">Bolo Personalizado</td><td data-label="Preço">85,00</td><td data-label="Descrição">Massa branca ou cacau 50%</td><td data-label="Categoria">Bolos</td><td data-label="Variações">10cm:85, 15cm:120, 20cm:160</td></tr></tbody>
             </table>
           </div>
         </article>
