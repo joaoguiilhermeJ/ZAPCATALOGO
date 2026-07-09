@@ -96,6 +96,7 @@
     .product-count { color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
     .products-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     .product-card { overflow: hidden; display: grid; grid-template-columns: 124px 1fr; min-height: 180px; border: 1px solid rgba(231,233,238,.9); border-radius: 20px; background: var(--surface); box-shadow: 0 6px 22px rgba(16,24,40,.065); }
+    .product-card.unavailable { opacity: .76; }
     .product-card.has-image { display: flex; flex-direction: column; }
     .product-image { position: relative; width: 100%; min-height: 180px; aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; color: var(--theme); background: linear-gradient(145deg, var(--theme-soft), #f8f8fa); }
     .product-card.has-image .product-image { border-radius: 20px 20px 0 0; }
@@ -105,8 +106,11 @@
     .product-placeholder { width: 54px; height: 54px; opacity: .72; filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--theme) 18%, transparent)); }
     .product-body { min-width: 0; padding: 14px 13px; display: flex; flex-direction: column; align-items: flex-start; }
     .category-badge { max-width: 100%; margin-bottom: 7px; padding: 4px 8px; overflow: hidden; border-radius: 999px; color: var(--theme-dark); background: var(--theme-soft); font-size: 10px; line-height: 1.2; font-weight: 800; letter-spacing: .045em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .unavailable-badge { max-width: 100%; margin: 0 0 7px; padding: 4px 8px; overflow: hidden; border-radius: 999px; color: #92400e; background: #fef3c7; font-size: 10px; line-height: 1.2; font-weight: 900; letter-spacing: .045em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
     .product-name { width: 100%; margin: 0 0 5px; overflow: hidden; font-size: 16px; line-height: 1.25; font-weight: 800; letter-spacing: -.015em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .product-description { width: 100%; margin: 0 0 10px; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .unavailable-message { width: 100%; margin: 0 0 10px; padding: 9px 10px; border-radius: 12px; color: #78350f; background: #fffbeb; font-size: 12px; line-height: 1.4; font-weight: 750; }
+    .unavailable-message strong { display: block; margin-bottom: 2px; }
     .product-footer { width: 100%; margin-top: auto; }
     .product-price { display: block; margin-bottom: 9px; color: #101828; font-size: 18px; font-weight: 850; letter-spacing: -.03em; }
     .variation-group { width: 100%; margin: 0 0 11px; }
@@ -115,6 +119,7 @@
     .variation-chip { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; color: #475467; background: #fff; font-size: 12px; font-weight: 750; cursor: pointer; }
     .variation-chip.active { border-color: var(--theme); color: #fff; background: var(--theme); box-shadow: 0 5px 12px color-mix(in srgb, var(--theme) 24%, transparent); }
     .buy-button { width: 100%; min-height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12px; }
+    .buy-button:disabled, .add-cart-button:disabled { opacity: .72; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
     .buy-button .icon { width: 17px; height: 17px; }
     .product-actions { display: grid; gap: 8px; }
     .add-cart-button { width: 100%; min-height: 42px; padding: 0 10px; border: 1px solid var(--theme); border-radius: 12px; color: var(--theme-dark); background: var(--theme-soft); font-size: 12px; font-weight: 800; cursor: pointer; }
@@ -333,7 +338,9 @@
     function obterVariacoes(produto) {
       return parseVariacoes(produto.variacoes, produto.preco);
     }
+    function produtoDisponivel(produto) { return produto.disponivel !== false; }
     function adicionarAoCarrinho(produto, variacao = null) {
+      if (!produtoDisponivel(produto)) { mostrarToast("Produto indisponível no momento"); return; }
       const baseId = String(produto.id ?? produto.codigo ?? produto.nome);
       const nomeVariacao = variacao?.nome || "";
       const precoFinal = variacao ? parsePreco(variacao.preco) : parsePreco(produto.preco);
@@ -346,7 +353,7 @@
         existente.variacao = nomeVariacao;
         existente.variacao_escolhida = nomeVariacao;
       } else {
-        state.carrinho.push({ id, produto_id: baseId, nome: produto.nome || "Produto", preco: precoFinal, preco_final: precoFinal, imagem_url: obterImagem(produto), variacao: nomeVariacao, variacao_escolhida: nomeVariacao, quantidade: 1 });
+        state.carrinho.push({ id, produto_id: baseId, nome: produto.nome || "Produto", preco: precoFinal, preco_final: precoFinal, imagem_url: obterImagem(produto), variacao: nomeVariacao, variacao_escolhida: nomeVariacao, disponivel: produtoDisponivel(produto), motivo_indisponivel: produto.motivo_indisponivel || "", quantidade: 1 });
       }
       salvarCarrinho(); mostrarToast(`${produto.nome || "Produto"} adicionado ao carrinho`);
     }
@@ -409,7 +416,9 @@
       const card = document.createElement("article");
       const nome = produto.nome || "Produto";
       const imagem = obterImagem(produto);
-      card.className = `product-card${imagem ? " has-image" : ""}`;
+      const disponivel = produtoDisponivel(produto);
+      const motivoIndisponivel = String(produto.motivo_indisponivel || "").trim();
+      card.className = `product-card${imagem ? " has-image" : ""}${disponivel ? "" : " unavailable"}`;
       const variacoes = obterVariacoes(produto);
       const precoBase = parsePreco(produto.preco);
       let variacaoSelecionada = null;
@@ -427,12 +436,14 @@
         <div class="${imageClasses}">${midia}</div>
         <div class="product-body">
           <span class="category-badge">${escaparHTML(produto.categoria || "Geral")}</span>
+          ${disponivel ? "" : `<span class="unavailable-badge">Indisponível</span>`}
           <h3 class="product-name">${escaparHTML(nome)}</h3>
           ${produto.descricao ? `<p class="product-description">${escaparHTML(produto.descricao)}</p>` : ""}
+          ${disponivel ? "" : `<p class="unavailable-message"><strong>Indisponível no momento</strong>${motivoIndisponivel ? escaparHTML(motivoIndisponivel) : ""}</p>`}
           <div class="product-footer">
             ${variacoesHTML}
             <strong class="product-price">${formatarPreco(precoBase)}</strong>
-            <div class="product-actions"><button class="add-cart-button" type="button">Adicionar ao carrinho</button><button class="buy-button" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar agora</button></div>
+            <div class="product-actions"><button class="add-cart-button" type="button" ${disponivel ? "" : "disabled"}>${disponivel ? "Adicionar ao carrinho" : "Produto indisponível"}</button><button class="buy-button" type="button" ${disponivel ? "" : "disabled"}>${disponivel ? `<svg class="icon" viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.23-.08-.39-.13-.56.13-.16.25-.64.81-.78.98-.15.17-.29.19-.54.06-1.46-.73-2.42-1.3-3.39-2.96-.26-.44.26-.41.73-1.36.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.17 1.75 2.67 4.24 3.75.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.29Z"/></svg>Comprar agora` : "Produto indisponível"}</button></div>
           </div>`;
       card.querySelectorAll(".variation-chip").forEach(chip => {
         chip.addEventListener("click", () => {
@@ -446,10 +457,12 @@
         });
       });
       card.querySelector(".buy-button").addEventListener("click", () => {
+        if (!disponivel) { mostrarToast("Produto indisponível no momento"); return; }
         if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de comprar."); return; }
         abrirWhatsApp(produto, variacaoSelecionada);
       });
       card.querySelector(".add-cart-button").addEventListener("click", () => {
+        if (!disponivel) { mostrarToast("Produto indisponível no momento"); return; }
         if (variacoes.length && !variacaoSelecionada) { mostrarToast("Escolha uma opção antes de adicionar ao carrinho."); return; }
         adicionarAoCarrinho(produto, variacaoSelecionada);
       });
@@ -511,6 +524,10 @@
     }
 
     function abrirWhatsApp(produto = null, variacao = null) {
+      if (produto && !produtoDisponivel(produto)) {
+        mostrarToast("Produto indisponível no momento");
+        return;
+      }
       const numero = normalizarWhatsApp(state.loja?.whatsapp);
       if (!whatsappValido(numero)) {
         alert("WhatsApp da loja inválido. Entre em contato com o lojista.");

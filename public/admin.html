@@ -53,6 +53,12 @@
     .status { flex:0 0 auto; padding:5px 8px; border-radius:999px; font-size:11px; font-weight:900; }
     .status.on { color:#047857; background:#dcfce7; }
     .status.off { color:#991b1b; background:#fee2e2; }
+    .status.unavailable { color:#92400e; background:#fef3c7; }
+    .status-row { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+    .availability-box { padding:12px; border:1px solid var(--line); border-radius:14px; background:#f9fafb; }
+    .check-row { display:flex; align-items:center; gap:9px; color:var(--ink); font-size:13px; font-weight:850; }
+    .check-row input { width:17px; height:17px; accent-color:var(--theme); }
+    .availability-reason { margin-top:10px; }
     .image-row { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-top:10px; }
     .file-input { min-width:0; width:100%; font-size:12px; }
     .state { min-height:70vh; padding:44px 18px; display:grid; place-items:center; text-align:center; }
@@ -195,12 +201,32 @@
     }
     async function api(path, options = {}) {
       const join = path.includes("?") ? "&" : "?";
-      const resposta = await fetch(`${API_ORIGIN}${path}${join}token=${encodeURIComponent(state.token)}`, {
-        ...options,
-        headers: options.body instanceof FormData ? options.headers : { "Content-Type": "application/json", Accept: "application/json", ...(options.headers || {}) },
-      });
-      const dados = await resposta.json().catch(() => ({}));
-      if (!resposta.ok || dados.success === false) throw new Error(dados.error || dados.message || `Erro ${resposta.status}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      let resposta;
+      try {
+        resposta = await fetch(`${API_ORIGIN}${path}${join}token=${encodeURIComponent(state.token)}`, {
+          ...options,
+          signal: controller.signal,
+          headers: options.body instanceof FormData ? options.headers : { "Content-Type": "application/json", Accept: "application/json", ...(options.headers || {}) },
+        });
+      } catch (erro) {
+        if (erro.name === "AbortError") throw new Error("Tempo limite ao carregar dados do servidor.");
+        throw erro;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      const texto = await resposta.text();
+      let dados = {};
+      if (texto) {
+        try {
+          dados = JSON.parse(texto);
+        } catch {
+          if (!resposta.ok) throw new Error(`Erro ${resposta.status}`);
+          throw new Error("Resposta invalida do servidor.");
+        }
+      }
+      if (!resposta.ok || dados?.success === false) throw new Error(dados?.error || dados?.message || `Erro ${resposta.status}`);
       return dados;
     }
     function renderizarLoja() {
@@ -235,11 +261,12 @@
       el.sheetCount.textContent = totalProdutos;
       el.products.replaceChildren(...state.produtos.map(produto => {
         const card = document.createElement("article");
+        const disponivel = produto.disponivel !== false;
         card.className = `product${produto.ativo === false ? " inactive" : ""}`;
         card.innerHTML = `
           <div class="product-media">${productImage(produto)}</div>
           <div class="product-body">
-            <div class="product-title"><strong>${escaparHTML(produto.nome || "Produto")}</strong><span class="status ${produto.ativo === false ? "off" : "on"}">${produto.ativo === false ? "Oculto" : "Visivel"}</span></div>
+            <div class="product-title"><strong>${escaparHTML(produto.nome || "Produto")}</strong><div class="status-row"><span class="status ${produto.ativo === false ? "off" : "on"}">${produto.ativo === false ? "Oculto" : "Visivel"}</span>${disponivel ? "" : `<span class="status unavailable">Indisponível</span>`}</div></div>
             <form class="grid product-form">
               <div class="field"><label>Nome</label><input class="input" name="nome" value="${escaparHTML(produto.nome || "")}" required></div>
               <div class="grid two">
@@ -249,6 +276,13 @@
               <div class="field"><label>Descricao</label><textarea class="textarea" name="descricao">${escaparHTML(produto.descricao || "")}</textarea></div>
               <div class="field"><label>Variacoes</label><textarea class="textarea" name="variacoes" placeholder="Supremo Morango:12, Supremo Nutella:14,50">${escaparHTML(produto.variacoes || "")}</textarea></div>
               <div class="field"><label>Imagem URL</label><input class="input" name="imagem_url" value="${escaparHTML(produto.imagem_url || "")}"></div>
+              <div class="availability-box">
+                <label class="check-row"><input type="checkbox" name="disponivel" ${disponivel ? "checked" : ""}> Produto disponível para venda</label>
+                <div class="field availability-reason" ${disponivel ? "hidden" : ""}>
+                  <label>Motivo da indisponibilidade</label>
+                  <textarea class="textarea" name="motivo_indisponivel" placeholder="Ex: Produto esgotado hoje&#10;Ex: Disponível apenas por encomenda&#10;Ex: Sem estoque no momento">${escaparHTML(produto.motivo_indisponivel || "")}</textarea>
+                </div>
+              </div>
               <button class="btn primary" type="submit">Salvar produto</button>
             </form>
             <div class="image-row">
@@ -261,6 +295,9 @@
             </div>
           </div>`;
         const form = card.querySelector(".product-form");
+        const disponivelInput = form.elements.disponivel;
+        const motivoField = card.querySelector(".availability-reason");
+        disponivelInput.addEventListener("change", () => { motivoField.hidden = disponivelInput.checked; });
         form.addEventListener("submit", event => salvarProduto(event, produto.id));
         card.querySelector(".toggle-active").addEventListener("click", () => alterarAtivo(produto.id, produto.ativo === false));
         card.querySelector(".upload-image").addEventListener("click", () => trocarImagem(card, produto.id));
@@ -271,9 +308,21 @@
     async function carregarPainel() {
       mostrarEstado("loading");
       try {
-        const dados = await api(`/api/admin/catalogos/${encodeURIComponent(state.slug)}`);
-        state.catalogo = dados.catalogo;
-        state.produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        const endpoint = `/api/admin/catalogos/${encodeURIComponent(state.slug)}`;
+        console.log("[Admin] slug:", state.slug);
+        console.log("[Admin] endpoint:", endpoint);
+        const response = await api(endpoint);
+        console.log("[Admin] resposta:", response);
+        const catalogo = response.catalogo || response.data?.catalogo || response.data;
+        const produtos = response.produtos || response.data?.produtos || [];
+        if (!catalogo || typeof catalogo !== "object" || Array.isArray(catalogo)) {
+          throw new Error("Resposta inesperada: dados da loja nao encontrados.");
+        }
+        if (!Array.isArray(produtos)) {
+          throw new Error("Resposta inesperada: lista de produtos invalida.");
+        }
+        state.catalogo = catalogo;
+        state.produtos = produtos;
         renderizarLoja();
         renderizarProdutos();
         mostrarEstado("content");
@@ -311,6 +360,8 @@
       try {
         const data = new FormData(form);
         const payload = Object.fromEntries(data.entries());
+        payload.disponivel = form.elements.disponivel.checked;
+        payload.motivo_indisponivel = form.elements.motivo_indisponivel.value.trim();
         const dados = await api(`/api/admin/produtos/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(payload) });
         state.produtos = state.produtos.map(produto => produto.id === id ? dados.produto : produto);
         renderizarProdutos();
